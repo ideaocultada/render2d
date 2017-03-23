@@ -31,3 +31,12 @@
 # Debug files
 *.dSYM/
 *.su
+
+# OSX junk
+.DS_Store
+.SD_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
