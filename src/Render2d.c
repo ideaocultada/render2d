@@ -133,6 +133,11 @@ static GLuint VertexBufferId = 0;
 // Value retrived on init.
 static float MaxAniostrophyLevel = 0.0f;
 
+static float HalfViewportW = 0.0f;
+static float HalfViewportH = 0.0f;
+static float ViewPortScaleW = 0.0f;
+static float ViewPortScaleH = 0.0f;
+
 // This function initializes materials to their default values.
 static void InitMaterial(struct Material *m)
 {
@@ -200,9 +205,13 @@ void rQuit()
 	glDeleteProgram(StdShader.shaderId);
 }
 
-void rSetViewport(unsigned int x, unsigned int y, unsigned w, unsigned h)
+void rSetViewport(unsigned w, unsigned h)
 {
-	glViewport(x, y, w, h);
+	HalfViewportW = (float)w * 0.5f;
+	HalfViewportH = (float)h * 0.5f;
+	ViewPortScaleW = 2.0f/(float)w;
+	ViewPortScaleH = 2.0f/(float)h;
+	glViewport(0, 0, w, h);
 }
 
 void rSetClearColor(float r, float g, float b, float a)
@@ -223,6 +232,12 @@ void rBegin()
 	glBindBuffer(GL_ARRAY_BUFFER, VertexBufferId);
 	VertexBufferMappedPtr =
 		(GLfloat*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+	glBufferData (
+		GL_ARRAY_BUFFER,
+		sizeof(GLfloat) * NUM_BATCH_BUFFER_VERTS,
+		NULL,
+		GL_STREAM_DRAW
+	);
 	glVertexAttribPointer (
 		ATTRIB_VERTEX,
 		2,
@@ -255,14 +270,18 @@ unsigned int rCreateTexture (
 	switch(n)
 	{
 		case 4:
+			fprintf(stdout, "created an RGBA texture.\n");
 			glTexImage2D(GL_TEXTURE_2D, 0, n, w, h, 0, GL_RGBA,
 				GL_UNSIGNED_BYTE, pixels);
 			break;
 		case 3:
+			fprintf(stdout, "created an RGB texture.\n");
 			glTexImage2D(GL_TEXTURE_2D, 0, n, w, h, 0, GL_RGB,
 				GL_UNSIGNED_BYTE, pixels);
 			break;
 		default:
+			fprintf(stderr, "texture bytes are wrong!\n");
+			exit(-1);
 			break;
 	}
 	return (unsigned int)texId;
@@ -275,7 +294,7 @@ void rDestroyTexture(unsigned int texId)
 
 void rSetTexture(unsigned int texId)
 {
-	DrawCalls[NumDrawCalls-1].material.texId = texId;
+	DrawCalls[NumDrawCalls].material.texId = texId;
 	NeedsANewDrawCall = true;
 }
 
@@ -291,11 +310,11 @@ static inline void Flush()
 		// Activate the standard shader.
 		glUseProgram(StdShader.shaderId);
 
-		// Enable texturing.
-		glEnable(GL_TEXTURE_2D);
-
 		// Activate main tex channel.
 		glActiveTexture(GL_TEXTURE0);
+
+		// Enable texturing.
+		glEnable(GL_TEXTURE_2D);
 
 		// Bind our texture.
 		glBindTexture(GL_TEXTURE_2D, DrawCalls[i].material.texId);
@@ -360,43 +379,49 @@ void rDraw (
 			(GLfloat*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
 	}
 
+	// Scale the values into the viewport.
+	float minx = (x - HalfViewportW) * ViewPortScaleW;
+	float miny = (y - HalfViewportH) * ViewPortScaleH;
+	float maxx = ((x + w) - HalfViewportW) * ViewPortScaleW;
+	float maxy = ((y + h) - HalfViewportH) * ViewPortScaleH;
+
 	// Triangle 1:
 	// Vert 1
-	VertexBufferMappedPtr[LastChangeIndex++] = x;
-	VertexBufferMappedPtr[LastChangeIndex++] = y;
-	VertexBufferMappedPtr[LastChangeIndex++] = u;
-	VertexBufferMappedPtr[LastChangeIndex++] = t;
+	VertexBufferMappedPtr[LastChangeIndex++] = minx;
+	VertexBufferMappedPtr[LastChangeIndex++] = miny;
+	VertexBufferMappedPtr[LastChangeIndex++] = s;
+	VertexBufferMappedPtr[LastChangeIndex++] = v;
 
 	// Vert 2
-	VertexBufferMappedPtr[LastChangeIndex++] = x + w;
-	VertexBufferMappedPtr[LastChangeIndex++] = y;
+	VertexBufferMappedPtr[LastChangeIndex++] = maxx;
+	VertexBufferMappedPtr[LastChangeIndex++] = miny;
 	VertexBufferMappedPtr[LastChangeIndex++] = s;
 	VertexBufferMappedPtr[LastChangeIndex++] = t;
 
 	// Vert 3
-	VertexBufferMappedPtr[LastChangeIndex++] = x + w;
-	VertexBufferMappedPtr[LastChangeIndex++] = y + h;
-	VertexBufferMappedPtr[LastChangeIndex++] = s;
-	VertexBufferMappedPtr[LastChangeIndex++] = v;
+	VertexBufferMappedPtr[LastChangeIndex++] = maxx;
+	VertexBufferMappedPtr[LastChangeIndex++] = maxy;
+	VertexBufferMappedPtr[LastChangeIndex++] = u;
+	VertexBufferMappedPtr[LastChangeIndex++] = t;
 
 	// Triangle 2:
 	// Vert 1
-	VertexBufferMappedPtr[LastChangeIndex++] = x + w;
-	VertexBufferMappedPtr[LastChangeIndex++] = y + h;
-	VertexBufferMappedPtr[LastChangeIndex++] = s;
-	VertexBufferMappedPtr[LastChangeIndex++] = v;
+	VertexBufferMappedPtr[LastChangeIndex++] = maxx;
+	VertexBufferMappedPtr[LastChangeIndex++] = maxy;
+	VertexBufferMappedPtr[LastChangeIndex++] = u;
+	VertexBufferMappedPtr[LastChangeIndex++] = t;
 
 	// Vert 2
-	VertexBufferMappedPtr[LastChangeIndex++] = x;
-	VertexBufferMappedPtr[LastChangeIndex++] = y + h;
+	VertexBufferMappedPtr[LastChangeIndex++] = minx;
+	VertexBufferMappedPtr[LastChangeIndex++] = maxy;
 	VertexBufferMappedPtr[LastChangeIndex++] = u;
 	VertexBufferMappedPtr[LastChangeIndex++] = v;
 
 	// Vert 3
-	VertexBufferMappedPtr[LastChangeIndex++] = x;
-	VertexBufferMappedPtr[LastChangeIndex++] = y;
-	VertexBufferMappedPtr[LastChangeIndex++] = u;
-	VertexBufferMappedPtr[LastChangeIndex++] = t;
+	VertexBufferMappedPtr[LastChangeIndex++] = minx;
+	VertexBufferMappedPtr[LastChangeIndex++] = miny;
+	VertexBufferMappedPtr[LastChangeIndex++] = s;
+	VertexBufferMappedPtr[LastChangeIndex++] = v;
 
 	// Increment the current draw call by 6 verts.
 	DrawCalls[NumDrawCalls-1].numElements += 6;

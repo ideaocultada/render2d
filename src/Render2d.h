@@ -29,7 +29,7 @@ void rInit();
 void rQuit();
 
 // Set's the viewport size.
-void rSetViewport(unsigned int x, unsigned int y, unsigned w, unsigned h);
+void rSetViewport(unsigned w, unsigned h);
 
 // Set's the clear color.
 void rSetClearColor(float r, float g, float b, float a);

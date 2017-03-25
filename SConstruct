@@ -16,14 +16,11 @@ platform = sys.platform
 
 if platform == "darwin":
 	libs = [
-		"glfw3"
 	]
 
 	frameworks = [
-		"OpenGL",
-		"Cocoa",
-		"IOKit",
-		"CoreVideo"
+		"SDL2",
+		"OpenGL"
 	]
 
 	defines = []
