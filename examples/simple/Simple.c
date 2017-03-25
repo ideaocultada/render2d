@@ -10,8 +10,8 @@
 */
 
 // Self explanatory window settings.
-#define WINDOW_W	1024
-#define WINDOW_H	768
+#define WINDOW_W	800
+#define WINDOW_H	600
 #define USE_VSYNC	1
 #define USE_AA		1
 #define ANIO_LEVEL	4
