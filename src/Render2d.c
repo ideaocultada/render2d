@@ -29,6 +29,9 @@
 	#error unsupported platform!
 #endif
 
+// Our little logging utility.
+#include "rLogger.h"
+
 // This is where the party is at.
 #include "Render2d.h"
 
@@ -133,6 +136,8 @@ static GLuint VertexBufferId = 0;
 // Value retrived on init.
 static float MaxAniostrophyLevel = 0.0f;
 
+// These values are used to 'project' points into the viewport as they come in
+//	to the draw function.
 static float HalfViewportW = 0.0f;
 static float HalfViewportH = 0.0f;
 static float ViewPortScaleW = 0.0f;
@@ -230,14 +235,14 @@ void rBegin()
 	glEnableVertexAttribArray(ATTRIB_VERTEX);
 	glEnableVertexAttribArray(ATTRIB_TEXTURE);
 	glBindBuffer(GL_ARRAY_BUFFER, VertexBufferId);
-	VertexBufferMappedPtr =
-		(GLfloat*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
 	glBufferData (
 		GL_ARRAY_BUFFER,
 		sizeof(GLfloat) * NUM_BATCH_BUFFER_VERTS,
 		NULL,
 		GL_STREAM_DRAW
 	);
+	VertexBufferMappedPtr =
+		(GLfloat*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
 	glVertexAttribPointer (
 		ATTRIB_VERTEX,
 		2,

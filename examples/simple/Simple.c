@@ -9,6 +9,12 @@
 	also find details here: https://opensource.org/licenses/BSD-3-Clause
 */
 
+#define WINDOW_W	1024
+#define WINDOW_H	768
+#define USE_VSYNC	1
+#define USE_AA		1
+#define ANIO_LEVEL	4
+
 #include <stdbool.h>
 
 #include <SDL2/SDL.h>
@@ -25,18 +31,18 @@ static SDL_GLContext RenderContext = NULL;
 static void InitSDL()
 {
 	SDL_Init(SDL_INIT_VIDEO);
-	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
+	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, USE_AA);
+	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, ANIO_LEVEL);
 	RenderWindow = SDL_CreateWindow (
 		"Simple",
 		SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED,
-		800,
-		600,
+		WINDOW_W,
+		WINDOW_H,
 		SDL_WINDOW_OPENGL
 	);
 	SDL_GL_CreateContext(RenderWindow);
-	SDL_GL_SetSwapInterval(1);
+	SDL_GL_SetSwapInterval(USE_VSYNC);
 }
 
 static void HandleSDLEvents()
@@ -65,7 +71,7 @@ int main(int argc, char *argv[])
 {
 	InitSDL();
 	rInit();
-	rSetViewport(800, 600);
+	rSetViewport(WINDOW_W, WINDOW_H);
 
 	int x, y, n;
 	unsigned char *pixels = stbi_load (
@@ -78,7 +84,9 @@ int main(int argc, char *argv[])
 		exit(-1);
 	}
 
-	int m = 0;
+	float m = (float)WINDOW_W / (float)x;
+	float k = (float)WINDOW_H / (float)y;
+	float f = 0.0f;
 
 	unsigned int texId = rCreateTexture(x, y, n, pixels);
 	while(!QuitFlag)
@@ -87,7 +95,8 @@ int main(int argc, char *argv[])
 		rClear();
 		rBegin();
 		rSetTexture(texId);
-		rDraw(m++, 0, 256, 256, 0, 0, 1, 1);
+		rDraw(0, 0, WINDOW_W, WINDOW_H, f, f, k + f, m + f);
+		f += 0.01f;
 		rEnd();
 		SDL_GL_SwapWindow(RenderWindow);
 	}
