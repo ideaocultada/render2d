@@ -202,6 +202,9 @@ void rInit()
 	StdShader.tex0Loc = glGetUniformLocation (
 		StdShader.shaderId, TEX0_UNIFORM_NAME
 	);
+
+	// Log friendly init message.
+	rLogInfo("Render2d initialized.")
 }
 
 void rQuit()
@@ -231,6 +234,15 @@ void rClear()
 
 void rBegin()
 {
+#ifndef R_NO_ERROR_CHECKING
+	// Abort begin if already batching.
+	if(VertexBufferMappedPtr)
+	{
+		rLogWarning("Aborting rBegin. Batch already started!");
+		return;
+	}
+#endif
+
 	NeedsANewDrawCall = true;
 	glEnableVertexAttribArray(ATTRIB_VERTEX);
 	glEnableVertexAttribArray(ATTRIB_TEXTURE);
@@ -268,6 +280,16 @@ unsigned int rCreateTexture (
 	unsigned int w, unsigned int h, unsigned int n, unsigned char *pixels
 )
 {
+#ifndef R_NO_ERROR_CHECKING
+	// Prevent the creation of textures during a batch.
+	if(VertexBufferMappedPtr)
+	{
+		rLogWarning("Aborting rCreateTexture. Cannot create textures while "
+			"batching.");
+		return 0;
+	}
+#endif
+
 	GLuint texId = 0;
 	glEnable(GL_TEXTURE_2D);
 	glGenTextures(1, &texId);
@@ -275,18 +297,19 @@ unsigned int rCreateTexture (
 	switch(n)
 	{
 		case 4:
-			fprintf(stdout, "created an RGBA texture.\n");
+			rLogInfo("Created an RGBA texture: %u", texId);
 			glTexImage2D(GL_TEXTURE_2D, 0, n, w, h, 0, GL_RGBA,
 				GL_UNSIGNED_BYTE, pixels);
 			break;
 		case 3:
-			fprintf(stdout, "created an RGB texture.\n");
+			rLogInfo("Created an RGB texture: %u", texId);
 			glTexImage2D(GL_TEXTURE_2D, 0, n, w, h, 0, GL_RGB,
 				GL_UNSIGNED_BYTE, pixels);
 			break;
 		default:
-			fprintf(stderr, "texture bytes are wrong!\n");
-			exit(-1);
+			rLogWarning("Unknown value for texure elements: %u\n", n);
+			glDeleteTextures(1, &texId);
+			return 0;
 			break;
 	}
 	return (unsigned int)texId;
@@ -294,11 +317,36 @@ unsigned int rCreateTexture (
 
 void rDestroyTexture(unsigned int texId)
 {
+#ifndef R_NO_ERROR_CHECKING
+	// Prevent the destruction of textures during a batch.
+	if(VertexBufferMappedPtr)
+	{
+		rLogWarning("Aborting rDestroyTexture. Cannot destroy textures while "
+			"batching.");
+		return;
+	}
+#endif
 	glDeleteTextures(1, &texId);
 }
 
 void rSetTexture(unsigned int texId)
 {
+#ifndef R_NO_ERROR_CHECKING
+	// Prevent the setting a texture outside of a batch.
+	if(!VertexBufferMappedPtr)
+	{
+		rLogWarning("Aborting rDestroyTexture. Cannot destroy textures while "
+			"batching.");
+		return;
+	}
+
+	// Error out if we pass in a zero texture id.
+	if(!texId)
+	{
+		rLogWarning("Aborting rDestroyTexture. texId is zero!");
+		return;
+	}
+#endif
 	DrawCalls[NumDrawCalls].material.texId = texId;
 	NeedsANewDrawCall = true;
 }
@@ -349,6 +397,22 @@ void rDraw (
 	float x, float y, float w, float h, float u, float v, float s, float t
 )
 {
+#ifndef R_NO_ERROR_CHECKING
+	// Abort draw if not batching.
+	if(!VertexBufferMappedPtr)
+	{
+		rLogWarning("Aborting rDraw. No batch not started!");
+		return;
+	}
+
+	// If don't have a texture, abort the draw call and log a warning.
+	if(!DrawCalls[NumDrawCalls].material.texId)
+	{
+		rLogWarning("Aborting rDraw. Material has no texture assigned!");
+		return;
+	}
+#endif
+
 	// If we need a new draw call, increment the counter and set the flag to
 	//	false.
 	if(NeedsANewDrawCall)
@@ -434,6 +498,15 @@ void rDraw (
 
 void rEnd()
 {
+#ifndef R_NO_ERROR_CHECKING
+	// Abort draw if not batching.
+	if(!VertexBufferMappedPtr)
+	{
+		rLogWarning("Aborting rEnd. No batch not started!");
+		return;
+	}
+#endif
+
 	// If the array has been modified, flush it.
 	if(LastChangeIndex)
 	{

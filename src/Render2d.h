@@ -9,6 +9,11 @@
 	also find details here: https://opensource.org/licenses/BSD-3-Clause
 */
 
+// Some compiler directives:
+//	R_NO_ERROR_CHECKING -- The renderer will do no error checking. Things can
+//		break this way if you do something dumb, but I suppose it will run a
+//		bit faster.
+
 #pragma once
 
 // Version number of the lib.
