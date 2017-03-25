@@ -391,10 +391,10 @@ static inline void Flush()
 			GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, MaxAniostrophyLevel
 		);
 		glTexParameteri (
-			GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR
+			GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST
 		);
 		glTexParameteri (
-			GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR
+			GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST
 		);
 
 		// Set the tex0 uniform to 0.

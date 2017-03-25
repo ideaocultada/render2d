@@ -17,7 +17,7 @@
 #define ANIO_LEVEL	4
 
 // Path to the background image.
-#define BG_IMAGE_PATH "examples/data/beachball.png"
+#define BG_IMAGE_PATH "examples/data/checkerboard.png"
 
 // We can use booleans.
 #include <stdbool.h>
@@ -180,7 +180,7 @@ int main(int argc, char *argv[])
 			scrollDelta -= 1.0f;
 		}
 
-		// Funish the render batch.
+		// Finish the render batch.
 		rEnd();
 
 		// Swap to screen.
