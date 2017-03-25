@@ -138,8 +138,8 @@ int main(int argc, char *argv[])
 
 	// Calculate the s/t coords based on the window dimentsions so we get a
 	//	nice tiling effect.
-	float s = (float)WINDOW_H / (float)y;
-	float t = (float)WINDOW_W / (float)x;
+	float s = (float)WINDOW_W / (float)x;
+	float t = (float)WINDOW_H / (float)y;
 
 	// An offset we modify the uvs by to achive a scrolling effect.
 	float scrollDelta = 0.0f;

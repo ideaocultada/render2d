@@ -468,12 +468,39 @@ void rDraw (
 	float maxx = ((x + w) - HalfViewportW) * ViewPortScaleW;
 	float maxy = ((y + h) - HalfViewportH) * ViewPortScaleH;
 
+	/*
+
+	This is the layout of verts:
+
+	(0,1)----------(1,1)
+	|                  |
+	|                  |
+	|                  |
+	|                  |
+	|                  |
+	|                  |
+	(0,0)----------(1,0)
+
+
+	This is the way UVs are layed out:
+
+	(u,v)----------(s,v)
+	|                  |
+	|                  |
+	|                  |
+	|                  |
+	|                  |
+	|                  |
+	(u,t)----------(s,t)
+
+	*/
+
 	// Triangle 1:
 	// Vert 1
 	VertexBufferMappedPtr[LastChangeIndex++] = minx;
 	VertexBufferMappedPtr[LastChangeIndex++] = miny;
-	VertexBufferMappedPtr[LastChangeIndex++] = s;
-	VertexBufferMappedPtr[LastChangeIndex++] = v;
+	VertexBufferMappedPtr[LastChangeIndex++] = u;
+	VertexBufferMappedPtr[LastChangeIndex++] = t;
 
 	// Vert 2
 	VertexBufferMappedPtr[LastChangeIndex++] = maxx;
@@ -484,15 +511,15 @@ void rDraw (
 	// Vert 3
 	VertexBufferMappedPtr[LastChangeIndex++] = maxx;
 	VertexBufferMappedPtr[LastChangeIndex++] = maxy;
-	VertexBufferMappedPtr[LastChangeIndex++] = u;
-	VertexBufferMappedPtr[LastChangeIndex++] = t;
+	VertexBufferMappedPtr[LastChangeIndex++] = s;
+	VertexBufferMappedPtr[LastChangeIndex++] = v;
 
 	// Triangle 2:
 	// Vert 1
 	VertexBufferMappedPtr[LastChangeIndex++] = maxx;
 	VertexBufferMappedPtr[LastChangeIndex++] = maxy;
-	VertexBufferMappedPtr[LastChangeIndex++] = u;
-	VertexBufferMappedPtr[LastChangeIndex++] = t;
+	VertexBufferMappedPtr[LastChangeIndex++] = s;
+	VertexBufferMappedPtr[LastChangeIndex++] = v;
 
 	// Vert 2
 	VertexBufferMappedPtr[LastChangeIndex++] = minx;
@@ -503,8 +530,8 @@ void rDraw (
 	// Vert 3
 	VertexBufferMappedPtr[LastChangeIndex++] = minx;
 	VertexBufferMappedPtr[LastChangeIndex++] = miny;
-	VertexBufferMappedPtr[LastChangeIndex++] = s;
-	VertexBufferMappedPtr[LastChangeIndex++] = v;
+	VertexBufferMappedPtr[LastChangeIndex++] = u;
+	VertexBufferMappedPtr[LastChangeIndex++] = t;
 
 	// Increment the current draw call by 6 verts.
 	DrawCalls[NumDrawCalls-1].numElements += 6;
