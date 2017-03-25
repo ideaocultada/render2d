@@ -1,11 +1,11 @@
 /*
 	Render2d.h
 
-	copyright 2017 (c) Michael Cabral.
+	Copyright 2017 (c) Michael Cabral.
 
-	this software is free to use under the terms of the BSD-3 license.
+	This software is free to use under the terms of the BSD-3 license.
 
-	please refer to the LICENSE file included with this source code. you can
+	Please refer to the LICENSE file included with this source code. You can
 	also find details here: https://opensource.org/licenses/BSD-3-Clause
 */
 
