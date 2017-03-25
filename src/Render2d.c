@@ -47,6 +47,9 @@ enum
 #define ATTRIB_VERTEX_NAME "vertex"
 #define ATTRIB_TEX_COORD_NAME "tex_coord"
 
+// Name constonts for shader uniforms.
+#define TEX0_UNIFORM_NAME "tex0"
+
 // Little struct to store shader text.
 struct ShaderText
 {
@@ -56,30 +59,28 @@ struct ShaderText
 // The standard shader program our little engine will use for now.
 static struct ShaderText StdShaderText =
 {
-	{
-		.vert =
-		"#version 120\n"
-		"attribute vec4 vertex;"
-		"attribute vec2 tex_coord;"
-		"varying vec2 v_tex_coord;"
-		"void main()"
-		"{"
-			"v_tex_coord = tex_coord;"
-			"gl_Position = vertex;"
-		"}",
+	.vert =
+	"#version 120\n"
+	"attribute vec4 vertex;"
+	"attribute vec2 tex_coord;"
+	"varying vec2 v_tex_coord;"
+	"void main()"
+	"{"
+		"v_tex_coord = tex_coord;"
+		"gl_Position = vertex;"
+	"}",
 
-		.frag =
-		"#version 120\n"
-		"uniform sampler2D tex0;"
-		"varying vec2 v_tex_coord;"
-		"void main()"
-		"{"
-			"vec4 tex_color = texture2D(tex0, v_tex_coord);"
-			"if(tex_color.a == 0.0)"
-				"discard;"
-			"gl_FragColor = tex_color;"
-		"}"
-	}
+	.frag =
+	"#version 120\n"
+	"uniform sampler2D tex0;"
+	"varying vec2 v_tex_coord;"
+	"void main()"
+	"{"
+		"vec4 tex_color = texture2D(tex0, v_tex_coord);"
+		"if(tex_color.a == 0.0)"
+			"discard;"
+		"gl_FragColor = tex_color;"
+	"}"
 };
 
 // OpenGL data for the standard shader used in the engine.
@@ -188,7 +189,9 @@ void rInit()
 		ATTRIB_TEX_COORD_NAME
 	);
 	glLinkProgram(StdShader.shaderId);
-	StdShader.tex0Loc = glGetUniformLocation(StdShader.shaderId, "tex0");
+	StdShader.tex0Loc = glGetUniformLocation (
+		StdShader.shaderId, TEX0_UNIFORM_NAME
+	);
 }
 
 void rQuit()
@@ -267,7 +270,7 @@ unsigned int rCreateTexture (
 
 void rDestroyTexture(unsigned int texId)
 {
-	glDeleteTextures(1, texId);
+	glDeleteTextures(1, &texId);
 }
 
 void rSetTexture(unsigned int texId)
@@ -318,7 +321,9 @@ static inline void Flush()
 	}
 }
 
-void rDraw(float x, float y, float z, float u, float v, float s, float t)
+void rDraw (
+	float x, float y, float w, float h, float u, float v, float s, float t
+)
 {
 	// If we need a new draw call, increment the counter and set the flag to
 	//	false.
@@ -397,7 +402,7 @@ void rDraw(float x, float y, float z, float u, float v, float s, float t)
 	DrawCalls[NumDrawCalls-1].numElements += 6;
 }
 
-rEnd()
+void rEnd()
 {
 	// If the array has been modified, flush it.
 	if(LastChangeIndex)
@@ -408,8 +413,8 @@ rEnd()
 	{
 		glUnmapBuffer(GL_ARRAY_BUFFER);
 	}
-	glDisableVertexAttribArray(MAT_ATTRIB_VERTEX);
-	glDisableVertexAttribArray(MAT_ATTRIB_TEXTURE);
+	glDisableVertexAttribArray(ATTRIB_VERTEX);
+	glDisableVertexAttribArray(ATTRIB_TEXTURE);
 
 	// Reset all our state variables.
 	NumDrawCalls = 0;

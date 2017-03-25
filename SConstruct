@@ -13,3 +13,55 @@ import os
 import shutil
 
 platform = sys.platform
+
+if platform == "darwin":
+	libs = [
+		"glfw3"
+	]
+
+	frameworks = [
+		"OpenGL",
+		"Cocoa",
+		"IOKit",
+		"CoreVideo"
+	]
+
+	defines = []
+
+	env = Environment (
+		ENV = {
+			"PATH" : os.environ["PATH"]
+		}
+	)
+
+	AddOption (
+		"--debug-build",
+		dest = "debug-build",
+		action = "store_true",
+		default = False
+	)
+
+	env.VariantDir("build", ".", 0)
+
+	sources = Glob("build/src/*.c")
+	sources += Glob("build/examples/Simple/*.c")
+
+	env.Program (
+		tools = ["default", "Xcode"],
+		target = "examples/bin/Simple",
+		source = sources,
+		LIBS = libs,
+		LIBPATH = [
+			"/usr/local/lib"
+		],
+		CPPPATH = [
+			"/usr/local/include"
+		],
+		CPPDEFINES = defines,
+		CFLAGS = ["-O1", "-std=c11"],
+		CXXFLAGS = ["-g", "-std=c++11"],
+		FRAMEWORKPATH = [
+			"/Library/Frameworks"
+		],
+		FRAMEWORKS = frameworks
+	)

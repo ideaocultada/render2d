@@ -52,7 +52,9 @@ void rDestroyTexture(unsigned int texId);
 void rSetTexture(unsigned int texId);
 
 // Draw a square.
-void rDraw(float x, float y, float z, float u, float v, float s, float t);
+void rDraw (
+	float x, float y, float w, float h, float u, float v, float s, float t
+);
 
 // End the batch. This will flush to the current render target.
-rEnd();
+void rEnd();
