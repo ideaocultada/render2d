@@ -24,7 +24,7 @@ static SDL_GLContext RenderContext = NULL;
 
 static void InitSDL()
 {
-	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER);
+	SDL_Init(SDL_INIT_VIDEO);
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
 	RenderWindow = SDL_CreateWindow (
@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
 		rClear();
 		rBegin();
 		rSetTexture(texId);
-		rDraw(m++, 0, 64, 64, 0, 0, 1, 1);
+		rDraw(m++, 0, 256, 256, 0, 0, 1, 1);
 		rEnd();
 		SDL_GL_SwapWindow(RenderWindow);
 	}
