@@ -170,6 +170,15 @@ void rInit()
 	glEnable(GL_MULTISAMPLE);
 	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &MaxAniostrophyLevel);
 
+// Enable the apple flush buffer extenstion if available:
+// https://developer.apple.com/library/content/documentation/GraphicsImaging/
+//	Conceptual/OpenGL-MacProgGuide/opengl_vertexdata/opengl_vertexdata.html
+#if defined(__APPLE__) && defined(__MACH__)
+	glBufferParameteriAPPLE (
+		GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE
+	);
+#endif
+
 	// Create the vertex buffer.
 	glGenBuffers(1, &VertexBufferId);
 	glBindBuffer(GL_ARRAY_BUFFER, VertexBufferId);
@@ -348,6 +357,17 @@ void rSetTexture(unsigned int texId)
 // This is the function that actually draws the draw calls.
 static inline void Flush()
 {
+// Use the apple flush buffer extenstion first if available:
+// https://developer.apple.com/library/content/documentation/GraphicsImaging/
+//	Conceptual/OpenGL-MacProgGuide/opengl_vertexdata/opengl_vertexdata.html
+#if defined(__APPLE__) && defined(__MACH__)
+	glFlushMappedBufferRangeAPPLE (
+		GL_ARRAY_BUFFER,
+		0,
+		LastChangeIndex * sizeof(GLfloat)
+	);
+#endif
+
 	// Unmap the array vuffer since we are no longer updating it.
 	glUnmapBuffer(GL_ARRAY_BUFFER);
 
