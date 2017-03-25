@@ -13,6 +13,9 @@
 
 #include "../../src/Render2d.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "../../stb/stb_image.h"
+
 int main()
 {
 	GLFWwindow* window;
@@ -32,11 +35,14 @@ int main()
 	/* Make the window's context current */
 	glfwMakeContextCurrent(window);
 
+	rInit();
+	rSetViewport(0, 0, 640, 480);
+
 	/* Loop until the user closes the window */
 	while (!glfwWindowShouldClose(window))
 	{
 		/* Render here */
-		glClear(GL_COLOR_BUFFER_BIT);
+		rClear();
 
 		/* Swap front and back buffers */
 		glfwSwapBuffers(window);
