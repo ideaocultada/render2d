@@ -39,5 +39,6 @@ examples/bin/*
 ._*
 .Spotlight-V100
 .Trashes
+.sconsign.dblite
 ehthumbs.db
 Thumbs.db
