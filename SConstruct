@@ -31,13 +31,6 @@ if platform == "darwin":
 		}
 	)
 
-	AddOption (
-		"--debug-build",
-		dest = "debug-build",
-		action = "store_true",
-		default = False
-	)
-
 	env.VariantDir("build", ".", 0)
 
 	sources = Glob("build/src/*.c")
@@ -61,4 +54,43 @@ if platform == "darwin":
 			"/Library/Frameworks"
 		],
 		FRAMEWORKS = frameworks
+	)
+
+
+if platform == "win32":
+	libs = [
+		"mingw32",
+		"SDL2main",
+		"SDL2",
+		"opengl32",
+		"glu32"
+	]
+
+	defines = [
+		"GLEW_STATIC"
+	]
+
+	env = Environment (
+		tools = ["mingw"],
+		ENV = {
+			"PATH" : os.environ["PATH"]
+		}
+	)
+
+	env.VariantDir("build", ".", 0)
+
+	sources = Glob("build/glew/*.c")
+	sources += Glob("build/src/*.c")
+	sources += Glob("build/examples/Simple/*.c")
+
+	env.Program (
+		target = "examples/bin/Simple",
+		source = sources,
+		LIBS = libs,
+		CPPPATH = [
+			"glew"
+		],
+		CPPDEFINES = defines,
+		CFLAGS = ["-O1", "-std=c11"],
+		CXXFLAGS = ["-O1", "-std=c++11"]
 	)

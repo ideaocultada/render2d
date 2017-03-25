@@ -16,15 +16,18 @@
 #include <stdarg.h>
 #include <string.h>
 
-// Our system should work on anything that supports OpenGL/ES 2+.
-//	for right now we support apple osx right out of the box. Windows, Linux,
-//	and mobile support shouldn't be too big a leap. Although windows will need
-//	a bit more work to get modern OpenGL stuff working.
+// Our system should work on anything that supports OpenGL/ES 2.1+
 #if defined(__APPLE__) && defined(__MACH__)
 	// include opengl
 	#include <OpenGL/gl.h>
 	#include <OpenGL/glu.h>
 	#include <OpenGL/glext.h>
+// Both windows and linux should build with the same headers.
+#elif defined(_WIN32) || defined(__linux__)
+	// Include opengl
+	#include <GL/glew.h>
+	#include <GL/gl.h>
+	#include <GL/glu.h>
 #else
 	#error unsupported platform!
 #endif
@@ -160,6 +163,28 @@ static void CompileShaderText (
 
 void rInit()
 {
+// Init glew if we are on windows or linux.
+#if defined(_WIN32) || defined(__linux__)
+	glewExperimental = GL_TRUE;
+	GLenum err = glewInit();
+	if(err != GLEW_OK)
+	{
+		rLogError("%s\n", glewGetErrorString(err));
+		exit(-1);
+	}
+	// Make sure we have a compatible version of OpenGL available
+	if (GLEW_VERSION_2_1)
+	{
+		rLogInfo("OpenGL 2.1 is supported.");
+	}
+	else
+	{
+		rLogError("This program requires at least OpenGL 2.1 compatible"
+			"hardware.");
+		exit(-1);
+	}
+#endif
+
 	// Set up OpenGL to its default values.
 	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
