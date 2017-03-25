@@ -247,12 +247,6 @@ void rBegin()
 	glEnableVertexAttribArray(ATTRIB_VERTEX);
 	glEnableVertexAttribArray(ATTRIB_TEXTURE);
 	glBindBuffer(GL_ARRAY_BUFFER, VertexBufferId);
-	glBufferData (
-		GL_ARRAY_BUFFER,
-		sizeof(GLfloat) * NUM_BATCH_BUFFER_VERTS,
-		NULL,
-		GL_STREAM_DRAW
-	);
 	VertexBufferMappedPtr =
 		(GLfloat*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
 	glVertexAttribPointer (
@@ -377,10 +371,10 @@ static inline void Flush()
 			GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, MaxAniostrophyLevel
 		);
 		glTexParameteri (
-			GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST
+			GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR
 		);
 		glTexParameteri (
-			GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST
+			GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR
 		);
 
 		// Set the tex0 uniform to 0.
