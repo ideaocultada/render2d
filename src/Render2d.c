@@ -137,6 +137,9 @@ static unsigned int LastChangeIndex = 0;
 // Mapped pointer to the vbo data. If it's NULL, we aren't batching.
 static GLfloat *VertexBufferMappedPtr = NULL;
 
+static bool IsBatching = false;
+// static GLfloat *VertexBufferData = NULL;
+
 // Current vbo we are using.
 static unsigned int CurVertexBufferIndex = 0;
 
@@ -206,23 +209,30 @@ void rInit()
 // Enable the apple flush buffer extenstion if available:
 // https://developer.apple.com/library/content/documentation/GraphicsImaging/
 //	Conceptual/OpenGL-MacProgGuide/opengl_vertexdata/opengl_vertexdata.html
-#if defined(__APPLE__) && defined(__MACH__)
+/*#if defined(__APPLE__) && defined(__MACH__)
 	glBufferParameteriAPPLE (
 		GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE
 	);
-#endif
+#endif*/
+
+	VertexBufferMappedPtr = malloc(sizeof(GLfloat) * NUM_BATCH_BUFFER_VERTS);
+	if(!VertexBufferMappedPtr)
+	{
+		rLogError("Failed to allocate memory for VertexBufferMappedPtr!");
+		exit(-1);
+	}
 
 	for(int i = 0; i < NUM_VBOS; i++)
 	{
 		// Create the vertex buffer.
 		glGenBuffers(1, &VertexBufferIds[i]);
 		glBindBuffer(GL_ARRAY_BUFFER, VertexBufferIds[i]);
-		glBufferData (
+		/*glBufferData (
 			GL_ARRAY_BUFFER,
 			sizeof(GLfloat) * NUM_BATCH_BUFFER_VERTS,
 			NULL,
 			GL_STREAM_DRAW
-		);
+		);*/
 	}
 
 	// Create the standard shader.
@@ -284,7 +294,7 @@ void rBegin()
 {
 #ifndef R_NO_ERROR_CHECKING
 	// Abort begin if already batching.
-	if(VertexBufferMappedPtr)
+	if(IsBatching)
 	{
 		rLogWarning("Aborting rBegin. Batch already started!");
 		return;
@@ -294,10 +304,11 @@ void rBegin()
 	NeedsANewDrawCall = true;
 	glEnableVertexAttribArray(ATTRIB_VERTEX);
 	glEnableVertexAttribArray(ATTRIB_TEXTURE);
+
 	glBindBuffer(GL_ARRAY_BUFFER, VertexBufferIds[CurVertexBufferIndex]);
 	if(++CurVertexBufferIndex >= NUM_VBOS) CurVertexBufferIndex = 0;
-	VertexBufferMappedPtr =
-		(GLfloat*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+	/*VertexBufferMappedPtr =
+		(GLfloat*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);*/
 	glVertexAttribPointer (
 		ATTRIB_VERTEX,
 		2,
@@ -317,6 +328,7 @@ void rBegin()
 	DrawCalls[0].startIndex = 0;
 	DrawCalls[0].numElements = 0;
 	InitMaterial(&DrawCalls[0].material);
+	IsBatching = true;
 }
 
 unsigned int rCreateTexture (
@@ -325,7 +337,7 @@ unsigned int rCreateTexture (
 {
 #ifndef R_NO_ERROR_CHECKING
 	// Prevent the creation of textures during a batch.
-	if(VertexBufferMappedPtr)
+	if(IsBatching)
 	{
 		rLogWarning("Aborting rCreateTexture. Cannot create textures while "
 			"batching.");
@@ -362,7 +374,7 @@ void rDestroyTexture(unsigned int texId)
 {
 #ifndef R_NO_ERROR_CHECKING
 	// Prevent the destruction of textures during a batch.
-	if(VertexBufferMappedPtr)
+	if(IsBatching)
 	{
 		rLogWarning("Aborting rDestroyTexture. Cannot destroy textures while "
 			"batching.");
@@ -378,7 +390,7 @@ void rSetTexture(unsigned int texId)
 {
 #ifndef R_NO_ERROR_CHECKING
 	// Prevent the setting a texture outside of a batch.
-	if(!VertexBufferMappedPtr)
+	if(!IsBatching)
 	{
 		rLogWarning("Aborting rDestroyTexture. Cannot destroy textures while "
 			"batching.");
@@ -402,19 +414,33 @@ static inline void Flush()
 // Use the apple flush buffer extenstion first if available:
 // https://developer.apple.com/library/content/documentation/GraphicsImaging/
 //	Conceptual/OpenGL-MacProgGuide/opengl_vertexdata/opengl_vertexdata.html
-#if defined(__APPLE__) && defined(__MACH__)
+/*#if defined(__APPLE__) && defined(__MACH__)
 	glFlushMappedBufferRangeAPPLE (
 		GL_ARRAY_BUFFER,
 		0,
 		LastChangeIndex * sizeof(GLfloat)
 	);
-#endif
+#endif*/
 
 	// Unmap the array vuffer since we are no longer updating it.
-	glUnmapBuffer(GL_ARRAY_BUFFER);
+	// glUnmapBuffer(GL_ARRAY_BUFFER);
+
+	glBufferData (
+		GL_ARRAY_BUFFER,
+		sizeof(GLfloat) * LastChangeIndex,
+		NULL,
+		GL_STREAM_DRAW
+	);
+	glBufferData (
+		GL_ARRAY_BUFFER,
+		sizeof(GLfloat) * LastChangeIndex,
+		VertexBufferMappedPtr,
+		GL_STREAM_DRAW
+	);
+	// glBufferSubData(GL_ARRAY_BUFFER, 0, LastChangeIndex * sizeof(GLfloat), VertexBufferMappedPtr);
 
 	// Set it to NULL.
-	VertexBufferMappedPtr = NULL;
+	// VertexBufferMappedPtr = NULL;
 
 	// Loop through all our draw calls.
 	for(unsigned int i = 0; i < NumDrawCalls; i++)
@@ -458,7 +484,7 @@ void rDraw (
 {
 #ifndef R_NO_ERROR_CHECKING
 	// Abort draw if not batching.
-	if(!VertexBufferMappedPtr)
+	if(!IsBatching)
 	{
 		rLogWarning("Aborting rDraw. No batch not started!");
 		return;
@@ -514,8 +540,8 @@ void rDraw (
 		if(++CurVertexBufferIndex >= NUM_VBOS) CurVertexBufferIndex = 0;
 
 		// remap our buffer.
-		VertexBufferMappedPtr =
-			(GLfloat*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+		/*VertexBufferMappedPtr =
+			(GLfloat*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);*/
 	}
 
 	// Scale the values into the viewport.
@@ -597,7 +623,7 @@ void rEnd()
 {
 #ifndef R_NO_ERROR_CHECKING
 	// Abort draw if not batching.
-	if(!VertexBufferMappedPtr)
+	if(!IsBatching)
 	{
 		rLogWarning("Aborting rEnd. No batch not started!");
 		return;
@@ -611,7 +637,20 @@ void rEnd()
 	}
 	else
 	{
-		glUnmapBuffer(GL_ARRAY_BUFFER);
+		glBufferData (
+			GL_ARRAY_BUFFER,
+			sizeof(GLfloat) * LastChangeIndex,
+			NULL,
+			GL_STREAM_DRAW
+		);
+		glBufferData (
+			GL_ARRAY_BUFFER,
+			sizeof(GLfloat) * LastChangeIndex,
+			VertexBufferMappedPtr,
+			GL_STREAM_DRAW
+		);
+		//glBufferSubData(GL_ARRAY_BUFFER, 0, LastChangeIndex * sizeof(GLfloat), VertexBufferMappedPtr);
+		// glUnmapBuffer(GL_ARRAY_BUFFER);
 	}
 	glDisableVertexAttribArray(ATTRIB_VERTEX);
 	glDisableVertexAttribArray(ATTRIB_TEXTURE);
@@ -620,6 +659,7 @@ void rEnd()
 	NumDrawCalls = 0;
 	LastChangeIndex = 0;
 	PendingTextureId = 0;
-	VertexBufferMappedPtr = NULL;
+	// VertexBufferMappedPtr = NULL;
 	NeedsANewDrawCall = false;
+	IsBatching = false;
 }
