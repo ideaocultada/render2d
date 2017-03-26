@@ -34,6 +34,7 @@
 
 // Our little logging utility.
 #include "rLogger.h"
+#include "rGLCheck.h"
 
 // This is where the party is at.
 #include "Render2d.h"
@@ -190,7 +191,7 @@ void rInit()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
+	glDisable(GL_CULL_FACE);
 	glFrontFace(GL_CCW);
 	glEnable(GL_MULTISAMPLE);
 	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &MaxAniostrophyLevel);
@@ -357,6 +358,8 @@ void rDestroyTexture(unsigned int texId)
 	glDeleteTextures(1, &texId);
 }
 
+unsigned int PendingTextureId = 0;
+
 void rSetTexture(unsigned int texId)
 {
 #ifndef R_NO_ERROR_CHECKING
@@ -375,7 +378,7 @@ void rSetTexture(unsigned int texId)
 		return;
 	}
 #endif
-	DrawCalls[NumDrawCalls].material.texId = texId;
+	PendingTextureId = texId;
 	NeedsANewDrawCall = true;
 }
 
@@ -395,6 +398,9 @@ static inline void Flush()
 
 	// Unmap the array vuffer since we are no longer updating it.
 	glUnmapBuffer(GL_ARRAY_BUFFER);
+
+	// Set it to NULL.
+	VertexBufferMappedPtr = NULL;
 
 	// Loop through all our draw calls.
 	for(unsigned int i = 0; i < NumDrawCalls; i++)
@@ -443,19 +449,26 @@ void rDraw (
 		rLogWarning("Aborting rDraw. No batch not started!");
 		return;
 	}
-
-	// If don't have a texture, abort the draw call and log a warning.
-	if(!DrawCalls[NumDrawCalls].material.texId)
-	{
-		rLogWarning("Aborting rDraw. Material has no texture assigned!");
-		return;
-	}
 #endif
 
 	// If we need a new draw call, increment the counter and set the flag to
 	//	false.
 	if(NeedsANewDrawCall)
 	{
+#ifndef R_NO_ERROR_CHECKING
+		// If don't have a texture, abort the draw call and log a warning.
+		if(!PendingTextureId)
+		{
+			rLogWarning("Aborting rDraw. Material has no texture assigned!");
+			return;
+		}
+#endif
+
+		DrawCalls[NumDrawCalls].material.texId = PendingTextureId;
+
+		// The start index should be the index of the last vertex we added.
+		DrawCalls[NumDrawCalls].startIndex = (LastChangeIndex / 24) * 6;
+		DrawCalls[NumDrawCalls].numElements = 0;
 		NumDrawCalls++;
 		NeedsANewDrawCall = false;
 	}
@@ -588,6 +601,7 @@ void rEnd()
 	// Reset all our state variables.
 	NumDrawCalls = 0;
 	LastChangeIndex = 0;
+	PendingTextureId = 0;
 	VertexBufferMappedPtr = NULL;
 	NeedsANewDrawCall = false;
 }

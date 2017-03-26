@@ -19,6 +19,9 @@
 // Path to the background image.
 #define BG_IMAGE_PATH "examples/data/checkerboard.png"
 
+// Path to the title image.
+#define TITLE_IMAGE_PATH "examples/data/title.png"
+
 // We can use booleans.
 #include <stdbool.h>
 
@@ -39,6 +42,30 @@ static bool QuitFlag = false;
 // Some SDL data we want to keep a hold of.
 static SDL_Window *RenderWindow = NULL;
 static SDL_GLContext RenderContext = NULL;
+
+// A little data structure to store image data.
+struct Image
+{
+	int x, y, n;
+	unsigned char *pixels;
+};
+
+// Load image data.
+static void LoadImage(struct Image *img, const char *path)
+{
+	img->pixels = stbi_load(path, &img->x, &img->y, &img->n, 0);
+	if(!img->pixels)
+	{
+		rLogError("Couldn't load image: %s", path);
+		exit(-1);
+	}
+}
+
+// Freeimage data.
+static void FreeImage(struct Image *img)
+{
+	stbi_image_free(img->pixels);
+}
 
 // This function initialies SDL.
 static void InitSDL()
@@ -119,27 +146,29 @@ int main(int argc, char *argv[])
 	rInit();
 	rSetViewport(WINDOW_W, WINDOW_H);
 
-	// Load the background image.
-	int x, y, n;
-	unsigned char *pixels = stbi_load(BG_IMAGE_PATH, &x, &y, &n, 0);
+	// Our image variables.
+	struct Image bgImage, titleImage;
 
-	// Make sure it loaded correctly.
-	if(!pixels)
-	{
-		rLogError("Couldn't load image: %s", BG_IMAGE_PATH);
-		exit(-1);
-	}
+	// Load our image assets.
+	LoadImage(&bgImage, BG_IMAGE_PATH);
+	LoadImage(&titleImage, TITLE_IMAGE_PATH);
 
 	// Create the background texture.
-	unsigned int bgTexId = rCreateTexture(x, y, n, pixels);
+	unsigned int bgTexId = rCreateTexture (
+		bgImage.x, bgImage.y, bgImage.n, bgImage.pixels
+	);
+	unsigned int titleTexId = rCreateTexture (
+		titleImage.x, titleImage.y, titleImage.n, titleImage.pixels
+	);
 
 	// We don't need the image data any more so release it.
-	stbi_image_free(pixels);
+	FreeImage(&bgImage);
+	FreeImage(&titleImage);
 
 	// Calculate the s/t coords based on the window dimentsions so we get a
 	//	nice tiling effect.
-	float s = (float)WINDOW_W / (float)x;
-	float t = (float)WINDOW_H / (float)y;
+	float s = (float)WINDOW_W / (float)bgImage.x;
+	float t = (float)WINDOW_H / (float)bgImage.y;
 
 	// An offset we modify the uvs by to achive a scrolling effect.
 	float scrollDelta = 0.0f;
@@ -179,6 +208,12 @@ int main(int argc, char *argv[])
 		{
 			scrollDelta -= 1.0f;
 		}
+
+		// Lets draw the title.
+		rSetTexture(titleTexId);
+
+		// Draw the title image.
+		rDraw(16, -16, titleImage.x, titleImage.y, 0, 0, 1, 1);
 
 		// Finish the render batch.
 		rEnd();
