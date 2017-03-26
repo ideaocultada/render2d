@@ -21,7 +21,7 @@
 
 // This number represents how many total quads can be buffered before requiring
 //	a flush.
-#define R_BATCH_BUFFER_SIZE 2048
+#define R_BATCH_BUFFER_SIZE 512
 
 // This number represents how many total draw calls can be batched before
 //	needing to be flushed. The more the less often a flush occures.
