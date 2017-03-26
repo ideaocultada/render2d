@@ -210,12 +210,8 @@ void rInit()
 	glEnable(GL_MULTISAMPLE);
 	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &MaxAniostrophyLevel);
 
-	// Create all our vertex buffers.
-	for(int i = 0; i < NUM_VBOS; i++)
-	{
-		// Create the vertex buffer.
-		glGenBuffers(1, &VertexBufferIds[i]);
-	}
+	// Create the vertex buffers.
+	glGenBuffers(NUM_VBOS, VertexBufferIds);
 
 	// Create the standard shader.
 	StdShader.shaderId = glCreateProgram();
@@ -246,10 +242,7 @@ void rInit()
 
 void rQuit()
 {
-	for(int i = 0; i < NUM_VBOS; i++)
-	{
-		glDeleteBuffers(1, &VertexBufferIds[i]);
-	}
+	glDeleteBuffers(NUM_VBOS, VertexBufferIds);
 	glDeleteProgram(StdShader.shaderId);
 }
 
