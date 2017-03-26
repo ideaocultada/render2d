@@ -114,11 +114,7 @@ static void InitSDL()
 	{
 		goto sdl_error__;
 	};
-
-	int glw, glh;
-	SDL_GL_GetDrawableSize(RenderWindow, &glw, &glh);
-	rLogInfo("glw: %d, glh: %d", glw, glh);
-
+	
 	// If we get here, everything went well.
 	return;
 
