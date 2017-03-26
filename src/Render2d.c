@@ -139,10 +139,10 @@ static unsigned int LastChangeIndex = 0;
 static unsigned int PendingTextureId = 0;
 
 // Mapped pointer to the vbo data. If it's NULL, we aren't batching.
-static GLfloat *VertexBufferData = NULL;
+static GLfloat VertexBufferData[NUM_BATCH_BUFFER_VERTS];
 
+// When this flag is set it means we are currently batching quads.
 static bool IsBatching = false;
-// static GLfloat *VertexBufferData = NULL;
 
 // Current vbo we are using.
 static unsigned int CurVertexBufferIndex = 0;
@@ -209,14 +209,6 @@ void rInit()
 	glFrontFace(GL_CCW);
 	glEnable(GL_MULTISAMPLE);
 	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &MaxAniostrophyLevel);
-
-	// Allocate memory for the vert data.
-	VertexBufferData = malloc(sizeof(GLfloat) * NUM_BATCH_BUFFER_VERTS);
-	if(!VertexBufferData)
-	{
-		rLogError("Failed to allocate memory for VertexBufferData!");
-		exit(-1);
-	}
 
 	// Create all our vertex buffers.
 	for(int i = 0; i < NUM_VBOS; i++)
