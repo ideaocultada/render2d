@@ -62,6 +62,8 @@ static unsigned int ViewW = 0, ViewH = 0;
 
 // Change at will. Lower means smoother, but higher values respond faster.
 static float FPSAccuracy = 0.1f;
+
+// Bookeeping variables for fps counting.
 static Uint32 CurTicks = 0, TickDelta = 0, LastTicks = 0;
 static float FrameTime = 0, FPS = 0;
 
