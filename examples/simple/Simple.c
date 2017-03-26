@@ -23,7 +23,7 @@
 #define TITLE_IMAGE_PATH "examples/data/title.png"
 
 // Path to the ball image.
-#define TITLE_BALL_IMAGE "examples/data/ball.png"
+#define BALL_IMAGE_PATH "examples/data/ball.png"
 
 // We can use booleans.
 #include <stdbool.h>
@@ -53,6 +53,13 @@ struct Image
 	unsigned char *pixels;
 };
 
+// Data for the ball.
+struct Ball
+{
+	int w, h;
+	float x, y, dx, dy;
+};
+
 // Load image data.
 static void LoadImage(struct Image *img, const char *path)
 {
@@ -62,6 +69,7 @@ static void LoadImage(struct Image *img, const char *path)
 		rLogError("Couldn't load image: %s", path);
 		exit(-1);
 	}
+	rLogInfo("Loaded image: %s, %d, %d, %d", path, img->x, img->y, img->n);
 }
 
 // Freeimage data.
@@ -107,6 +115,10 @@ static void InitSDL()
 		goto sdl_error__;
 	};
 
+	int glw, glh;
+	SDL_GL_GetDrawableSize(RenderWindow, &glw, &glh);
+	rLogInfo("glw: %d, glh: %d", glw, glh);
+
 	// If we get here, everything went well.
 	return;
 
@@ -141,6 +153,21 @@ static void HandleSDLEvents()
 	}
 }
 
+// This function takes care of bouncing the ball off the edges of the screen.
+static void BounceBall(struct Ball *ball)
+{
+	ball->x += ball->dx;
+	ball->y += ball->dy;
+	if(ball->x < 0.0f || ball->x + ball->w > WINDOW_W)
+	{
+		ball->dx *= -1.0f;
+	}
+	if(ball->y < 0.0f || ball->y + ball->h > WINDOW_H)
+	{
+		ball->dy *= -1.0f;
+	}
+}
+
 // This is where the magic happens.
 int main(int argc, char *argv[])
 {
@@ -150,23 +177,37 @@ int main(int argc, char *argv[])
 	rSetViewport(WINDOW_W, WINDOW_H);
 
 	// Our image variables.
-	struct Image bgImage, titleImage;
+	struct Image bgImage, titleImage, ballImage;
 
 	// Load our image assets.
 	LoadImage(&bgImage, BG_IMAGE_PATH);
 	LoadImage(&titleImage, TITLE_IMAGE_PATH);
+	LoadImage(&ballImage, BALL_IMAGE_PATH);
+
+	// The state of the ball.
+	struct Ball ball = (struct Ball) {
+		ballImage.x, ballImage.y, 0, 0, 2.0f, 2.0f
+	};
 
 	// Create the background texture.
 	unsigned int bgTexId = rCreateTexture (
 		bgImage.x, bgImage.y, bgImage.n, bgImage.pixels
 	);
+
+	// Create the title texture.
 	unsigned int titleTexId = rCreateTexture (
 		titleImage.x, titleImage.y, titleImage.n, titleImage.pixels
+	);
+
+	// Create the ball.
+	unsigned int ballTexId = rCreateTexture (
+		ballImage.x, ballImage.y, ballImage.n, ballImage.pixels
 	);
 
 	// We don't need the image data any more so release it.
 	FreeImage(&bgImage);
 	FreeImage(&titleImage);
+	FreeImage(&ballImage);
 
 	// Calculate the s/t coords based on the window dimentsions so we get a
 	//	nice tiling effect.
@@ -204,13 +245,22 @@ int main(int argc, char *argv[])
 		);
 
 		// Increment the scroll delta.
-		scrollDelta += 0.01f;
+		scrollDelta += 0.0025f;
 
 		// Prevent unecessary rollover. Shouldn't really matter but I'm OCD.
 		if(scrollDelta > 1.0f)
 		{
 			scrollDelta -= 1.0f;
 		}
+
+		// Set the ball texture.
+		rSetTexture(ballTexId);
+
+		// Draw the ball.
+		rDraw(ball.x, ball.y, ballImage.x, ballImage.y, 0, 0, 1, 1);
+
+		// Animate the ball.
+		BounceBall(&ball);
 
 		// Lets draw the title.
 		rSetTexture(titleTexId);
