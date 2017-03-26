@@ -57,6 +57,9 @@ enum
 // Name constonts for shader uniforms.
 #define TEX0_UNIFORM_NAME "tex0"
 
+// Amount of vbos we cycle through.
+#define NUM_VBOS 6
+
 // Little struct to store shader text.
 struct ShaderText
 {
@@ -134,8 +137,12 @@ static unsigned int LastChangeIndex = 0;
 // Mapped pointer to the vbo data. If it's NULL, we aren't batching.
 static GLfloat *VertexBufferMappedPtr = NULL;
 
-// Id for the vertex array buffer.
-static GLuint VertexBufferId = 0;
+// Current vbo we are using.
+static unsigned int CurVertexBufferIndex = 0;
+
+// Id for the vertex array buffer. We cycle through mutliple vbos for perf.
+//	reasons.
+static GLuint VertexBufferIds[NUM_VBOS] = { 0, 0, 0, 0, 0, 0 };
 
 // Value retrived on init.
 static float MaxAniostrophyLevel = 0.0f;
@@ -205,15 +212,18 @@ void rInit()
 	);
 #endif
 
-	// Create the vertex buffer.
-	glGenBuffers(1, &VertexBufferId);
-	glBindBuffer(GL_ARRAY_BUFFER, VertexBufferId);
-	glBufferData (
-		GL_ARRAY_BUFFER,
-		sizeof(GLfloat) * NUM_BATCH_BUFFER_VERTS,
-		NULL,
-		GL_STREAM_DRAW
-	);
+	for(int i = 0; i < NUM_VBOS; i++)
+	{
+		// Create the vertex buffer.
+		glGenBuffers(1, &VertexBufferIds[i]);
+		glBindBuffer(GL_ARRAY_BUFFER, VertexBufferIds[i]);
+		glBufferData (
+			GL_ARRAY_BUFFER,
+			sizeof(GLfloat) * NUM_BATCH_BUFFER_VERTS,
+			NULL,
+			GL_STREAM_DRAW
+		);
+	}
 
 	// Create the standard shader.
 	StdShader.shaderId = glCreateProgram();
@@ -244,7 +254,10 @@ void rInit()
 
 void rQuit()
 {
-	glDeleteBuffers(1, &VertexBufferId);
+	for(int i = 0; i < NUM_VBOS; i++)
+	{
+		glDeleteBuffers(1, &VertexBufferIds[i]);
+	}
 	glDeleteProgram(StdShader.shaderId);
 }
 
@@ -281,7 +294,8 @@ void rBegin()
 	NeedsANewDrawCall = true;
 	glEnableVertexAttribArray(ATTRIB_VERTEX);
 	glEnableVertexAttribArray(ATTRIB_TEXTURE);
-	glBindBuffer(GL_ARRAY_BUFFER, VertexBufferId);
+	glBindBuffer(GL_ARRAY_BUFFER, VertexBufferIds[CurVertexBufferIndex]);
+	if(++CurVertexBufferIndex >= NUM_VBOS) CurVertexBufferIndex = 0;
 	VertexBufferMappedPtr =
 		(GLfloat*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
 	glVertexAttribPointer (
@@ -494,6 +508,10 @@ void rDraw (
 
 		// draw calls back to one since we are about to modify data.
 		NumDrawCalls = 1;
+
+		// Bind a new vertex buffer.
+		glBindBuffer(GL_ARRAY_BUFFER, VertexBufferIds[CurVertexBufferIndex]);
+		if(++CurVertexBufferIndex >= NUM_VBOS) CurVertexBufferIndex = 0;
 
 		// remap our buffer.
 		VertexBufferMappedPtr =
