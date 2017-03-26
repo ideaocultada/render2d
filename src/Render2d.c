@@ -134,6 +134,10 @@ static unsigned int NumDrawCalls = 0;
 // This keeps track of the last vertex in the vbo that was changed.
 static unsigned int LastChangeIndex = 0;
 
+// This is the texture that needs to be bound when the next draw call is
+//	generated.
+static unsigned int PendingTextureId = 0;
+
 // Mapped pointer to the vbo data. If it's NULL, we aren't batching.
 static GLfloat *VertexBufferData = NULL;
 
@@ -369,8 +373,6 @@ void rDestroyTexture(unsigned int texId)
 #endif
 	glDeleteTextures(1, &texId);
 }
-
-unsigned int PendingTextureId = 0;
 
 void rSetTexture(unsigned int texId)
 {
@@ -624,7 +626,6 @@ void rEnd()
 	NumDrawCalls = 0;
 	LastChangeIndex = 0;
 	PendingTextureId = 0;
-	// VertexBufferData = NULL;
 	NeedsANewDrawCall = false;
 	IsBatching = false;
 }
