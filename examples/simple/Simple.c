@@ -22,6 +22,9 @@
 // Path to the title image.
 #define TITLE_IMAGE_PATH "examples/data/title.png"
 
+// Path to the ball image.
+#define TITLE_BALL_IMAGE "examples/data/ball.png"
+
 // We can use booleans.
 #include <stdbool.h>
 
