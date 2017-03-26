@@ -135,7 +135,7 @@ static unsigned int NumDrawCalls = 0;
 static unsigned int LastChangeIndex = 0;
 
 // Mapped pointer to the vbo data. If it's NULL, we aren't batching.
-static GLfloat *VertexBufferMappedPtr = NULL;
+static GLfloat *VertexBufferData = NULL;
 
 static bool IsBatching = false;
 // static GLfloat *VertexBufferData = NULL;
@@ -206,33 +206,19 @@ void rInit()
 	glEnable(GL_MULTISAMPLE);
 	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &MaxAniostrophyLevel);
 
-// Enable the apple flush buffer extenstion if available:
-// https://developer.apple.com/library/content/documentation/GraphicsImaging/
-//	Conceptual/OpenGL-MacProgGuide/opengl_vertexdata/opengl_vertexdata.html
-/*#if defined(__APPLE__) && defined(__MACH__)
-	glBufferParameteriAPPLE (
-		GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE
-	);
-#endif*/
-
-	VertexBufferMappedPtr = malloc(sizeof(GLfloat) * NUM_BATCH_BUFFER_VERTS);
-	if(!VertexBufferMappedPtr)
+	// Allocate memory for the vert data.
+	VertexBufferData = malloc(sizeof(GLfloat) * NUM_BATCH_BUFFER_VERTS);
+	if(!VertexBufferData)
 	{
-		rLogError("Failed to allocate memory for VertexBufferMappedPtr!");
+		rLogError("Failed to allocate memory for VertexBufferData!");
 		exit(-1);
 	}
 
+	// Create all our vertex buffers.
 	for(int i = 0; i < NUM_VBOS; i++)
 	{
 		// Create the vertex buffer.
 		glGenBuffers(1, &VertexBufferIds[i]);
-		glBindBuffer(GL_ARRAY_BUFFER, VertexBufferIds[i]);
-		/*glBufferData (
-			GL_ARRAY_BUFFER,
-			sizeof(GLfloat) * NUM_BATCH_BUFFER_VERTS,
-			NULL,
-			GL_STREAM_DRAW
-		);*/
 	}
 
 	// Create the standard shader.
@@ -305,10 +291,10 @@ void rBegin()
 	glEnableVertexAttribArray(ATTRIB_VERTEX);
 	glEnableVertexAttribArray(ATTRIB_TEXTURE);
 
+	// Bind the current buffer and move the index up.
 	glBindBuffer(GL_ARRAY_BUFFER, VertexBufferIds[CurVertexBufferIndex]);
 	if(++CurVertexBufferIndex >= NUM_VBOS) CurVertexBufferIndex = 0;
-	/*VertexBufferMappedPtr =
-		(GLfloat*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);*/
+
 	glVertexAttribPointer (
 		ATTRIB_VERTEX,
 		2,
@@ -411,36 +397,21 @@ void rSetTexture(unsigned int texId)
 // This is the function that actually draws the draw calls.
 static inline void Flush()
 {
-// Use the apple flush buffer extenstion first if available:
-// https://developer.apple.com/library/content/documentation/GraphicsImaging/
-//	Conceptual/OpenGL-MacProgGuide/opengl_vertexdata/opengl_vertexdata.html
-/*#if defined(__APPLE__) && defined(__MACH__)
-	glFlushMappedBufferRangeAPPLE (
-		GL_ARRAY_BUFFER,
-		0,
-		LastChangeIndex * sizeof(GLfloat)
-	);
-#endif*/
-
-	// Unmap the array vuffer since we are no longer updating it.
-	// glUnmapBuffer(GL_ARRAY_BUFFER);
-
+	// Orphan the buffer.
 	glBufferData (
 		GL_ARRAY_BUFFER,
 		sizeof(GLfloat) * LastChangeIndex,
 		NULL,
 		GL_STREAM_DRAW
 	);
+
+	// Upload the data.
 	glBufferData (
 		GL_ARRAY_BUFFER,
 		sizeof(GLfloat) * LastChangeIndex,
-		VertexBufferMappedPtr,
+		VertexBufferData,
 		GL_STREAM_DRAW
 	);
-	// glBufferSubData(GL_ARRAY_BUFFER, 0, LastChangeIndex * sizeof(GLfloat), VertexBufferMappedPtr);
-
-	// Set it to NULL.
-	// VertexBufferMappedPtr = NULL;
 
 	// Loop through all our draw calls.
 	for(unsigned int i = 0; i < NumDrawCalls; i++)
@@ -538,10 +509,6 @@ void rDraw (
 		// Bind a new vertex buffer.
 		glBindBuffer(GL_ARRAY_BUFFER, VertexBufferIds[CurVertexBufferIndex]);
 		if(++CurVertexBufferIndex >= NUM_VBOS) CurVertexBufferIndex = 0;
-
-		// remap our buffer.
-		/*VertexBufferMappedPtr =
-			(GLfloat*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);*/
 	}
 
 	// Scale the values into the viewport.
@@ -579,41 +546,41 @@ void rDraw (
 
 	// Triangle 1:
 	// Vert 1
-	VertexBufferMappedPtr[LastChangeIndex++] = minx;
-	VertexBufferMappedPtr[LastChangeIndex++] = miny;
-	VertexBufferMappedPtr[LastChangeIndex++] = u;
-	VertexBufferMappedPtr[LastChangeIndex++] = t;
+	VertexBufferData[LastChangeIndex++] = minx;
+	VertexBufferData[LastChangeIndex++] = miny;
+	VertexBufferData[LastChangeIndex++] = u;
+	VertexBufferData[LastChangeIndex++] = t;
 
 	// Vert 2
-	VertexBufferMappedPtr[LastChangeIndex++] = maxx;
-	VertexBufferMappedPtr[LastChangeIndex++] = miny;
-	VertexBufferMappedPtr[LastChangeIndex++] = s;
-	VertexBufferMappedPtr[LastChangeIndex++] = t;
+	VertexBufferData[LastChangeIndex++] = maxx;
+	VertexBufferData[LastChangeIndex++] = miny;
+	VertexBufferData[LastChangeIndex++] = s;
+	VertexBufferData[LastChangeIndex++] = t;
 
 	// Vert 3
-	VertexBufferMappedPtr[LastChangeIndex++] = maxx;
-	VertexBufferMappedPtr[LastChangeIndex++] = maxy;
-	VertexBufferMappedPtr[LastChangeIndex++] = s;
-	VertexBufferMappedPtr[LastChangeIndex++] = v;
+	VertexBufferData[LastChangeIndex++] = maxx;
+	VertexBufferData[LastChangeIndex++] = maxy;
+	VertexBufferData[LastChangeIndex++] = s;
+	VertexBufferData[LastChangeIndex++] = v;
 
 	// Triangle 2:
 	// Vert 1
-	VertexBufferMappedPtr[LastChangeIndex++] = maxx;
-	VertexBufferMappedPtr[LastChangeIndex++] = maxy;
-	VertexBufferMappedPtr[LastChangeIndex++] = s;
-	VertexBufferMappedPtr[LastChangeIndex++] = v;
+	VertexBufferData[LastChangeIndex++] = maxx;
+	VertexBufferData[LastChangeIndex++] = maxy;
+	VertexBufferData[LastChangeIndex++] = s;
+	VertexBufferData[LastChangeIndex++] = v;
 
 	// Vert 2
-	VertexBufferMappedPtr[LastChangeIndex++] = minx;
-	VertexBufferMappedPtr[LastChangeIndex++] = maxy;
-	VertexBufferMappedPtr[LastChangeIndex++] = u;
-	VertexBufferMappedPtr[LastChangeIndex++] = v;
+	VertexBufferData[LastChangeIndex++] = minx;
+	VertexBufferData[LastChangeIndex++] = maxy;
+	VertexBufferData[LastChangeIndex++] = u;
+	VertexBufferData[LastChangeIndex++] = v;
 
 	// Vert 3
-	VertexBufferMappedPtr[LastChangeIndex++] = minx;
-	VertexBufferMappedPtr[LastChangeIndex++] = miny;
-	VertexBufferMappedPtr[LastChangeIndex++] = u;
-	VertexBufferMappedPtr[LastChangeIndex++] = t;
+	VertexBufferData[LastChangeIndex++] = minx;
+	VertexBufferData[LastChangeIndex++] = miny;
+	VertexBufferData[LastChangeIndex++] = u;
+	VertexBufferData[LastChangeIndex++] = t;
 
 	// Increment the current draw call by 6 verts.
 	DrawCalls[NumDrawCalls-1].numElements += 6;
@@ -646,11 +613,9 @@ void rEnd()
 		glBufferData (
 			GL_ARRAY_BUFFER,
 			sizeof(GLfloat) * LastChangeIndex,
-			VertexBufferMappedPtr,
+			VertexBufferData,
 			GL_STREAM_DRAW
 		);
-		//glBufferSubData(GL_ARRAY_BUFFER, 0, LastChangeIndex * sizeof(GLfloat), VertexBufferMappedPtr);
-		// glUnmapBuffer(GL_ARRAY_BUFFER);
 	}
 	glDisableVertexAttribArray(ATTRIB_VERTEX);
 	glDisableVertexAttribArray(ATTRIB_TEXTURE);
@@ -659,7 +624,7 @@ void rEnd()
 	NumDrawCalls = 0;
 	LastChangeIndex = 0;
 	PendingTextureId = 0;
-	// VertexBufferMappedPtr = NULL;
+	// VertexBufferData = NULL;
 	NeedsANewDrawCall = false;
 	IsBatching = false;
 }

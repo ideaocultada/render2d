@@ -114,7 +114,7 @@ static void InitSDL()
 	{
 		goto sdl_error__;
 	};
-	
+
 	// If we get here, everything went well.
 	return;
 
