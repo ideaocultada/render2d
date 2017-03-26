@@ -15,6 +15,10 @@
 #define USE_VSYNC	1
 #define USE_AA		1
 #define ANIO_LEVEL	4
+#define USE_FULLSCREEN false
+
+// Number of bouncing ball sprites to render.
+#define NUM_BALLS 20
 
 // Path to the background image.
 #define BG_IMAGE_PATH "examples/data/checkerboard.png"
@@ -27,6 +31,10 @@
 
 // We can use booleans.
 #include <stdbool.h>
+
+// These are for random numbers.
+#include <stdlib.h>
+#include <time.h>
 
 // The SDL2 library.
 #include <SDL2/SDL.h>
@@ -46,6 +54,17 @@ static bool QuitFlag = false;
 static SDL_Window *RenderWindow = NULL;
 static SDL_GLContext RenderContext = NULL;
 
+// Dimensions of the current view. Use these instead of the constants.
+static unsigned int ViewW = 0, ViewH = 0;
+
+// FPS counter based on method described here:
+//	http://sdl.beuc.net/sdl.wiki/SDL_Average_FPS_Measurement
+
+// Change at will. Lower means smoother, but higher values respond faster.
+static float FPSAccuracy = 0.1f;
+static Uint32 CurTicks = 0, TickDelta = 0, LastTicks = 0;
+static float FrameTime = 0, FPS = 0;
+
 // A little data structure to store image data.
 struct Image
 {
@@ -59,6 +78,15 @@ struct Ball
 	int w, h;
 	float x, y, dx, dy;
 };
+
+// An array with all the balls we are going to render.
+static struct Ball Balls[NUM_BALLS];
+
+// Returns a random number in the given range.
+static int RandomRange(int min, int max)
+{
+	return rand() % ((max + 1) - min) + min;
+}
 
 // Load image data.
 static void LoadImage(struct Image *img, const char *path)
@@ -93,14 +121,43 @@ static void InitSDL()
 	{
 		goto sdl_error__;
 	}
-	RenderWindow = SDL_CreateWindow (
-		"Simple",
-		SDL_WINDOWPOS_CENTERED,
-		SDL_WINDOWPOS_CENTERED,
-		WINDOW_W,
-		WINDOW_H,
-		SDL_WINDOW_OPENGL
-	);
+	if(USE_FULLSCREEN)
+	{
+		// For fullscreen mode we detect your monitors current res,
+		//	and set the window to that size.
+		SDL_DisplayMode current;
+		if(SDL_GetCurrentDisplayMode(0, &current))
+		{
+			goto sdl_error__;
+		}
+		RenderWindow = SDL_CreateWindow (
+			"Simple",
+			SDL_WINDOWPOS_CENTERED,
+			SDL_WINDOWPOS_CENTERED,
+			current.w,
+			current.h,
+			SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN
+		);
+
+		// Because high-dpi monitors may have a different virtual display size
+		//	than the actual display resolution, we use this function to get the
+		//	the actual pixel dimentisons of the monitor.
+		SDL_GL_GetDrawableSize(RenderWindow, &ViewW, &ViewH);
+		rLogInfo("ViewW: %u, ViewH: %u", ViewW, ViewH);
+	}
+	else
+	{
+		RenderWindow = SDL_CreateWindow (
+			"Simple",
+			SDL_WINDOWPOS_CENTERED,
+			SDL_WINDOWPOS_CENTERED,
+			WINDOW_W,
+			WINDOW_H,
+			SDL_WINDOW_OPENGL
+		);
+		ViewW = WINDOW_W;
+		ViewH = WINDOW_H;
+	}
 	if(!RenderWindow)
 	{
 		goto sdl_error__;
@@ -154,11 +211,11 @@ static void BounceBall(struct Ball *ball)
 {
 	ball->x += ball->dx;
 	ball->y += ball->dy;
-	if(ball->x < 0.0f || ball->x + ball->w > WINDOW_W)
+	if(ball->x < 0.0f || ball->x + ball->w > ViewW)
 	{
 		ball->dx *= -1.0f;
 	}
-	if(ball->y < 0.0f || ball->y + ball->h > WINDOW_H)
+	if(ball->y < 0.0f || ball->y + ball->h > ViewH)
 	{
 		ball->dy *= -1.0f;
 	}
@@ -167,10 +224,13 @@ static void BounceBall(struct Ball *ball)
 // This is where the magic happens.
 int main(int argc, char *argv[])
 {
+	// Kick off random number generator.
+	srand(time(NULL));
+
 	// Init everything.
 	InitSDL();
 	rInit();
-	rSetViewport(WINDOW_W, WINDOW_H);
+	rSetViewport(ViewW, ViewH);
 
 	// Our image variables.
 	struct Image bgImage, titleImage, ballImage;
@@ -180,10 +240,26 @@ int main(int argc, char *argv[])
 	LoadImage(&titleImage, TITLE_IMAGE_PATH);
 	LoadImage(&ballImage, BALL_IMAGE_PATH);
 
-	// The state of the ball.
-	struct Ball ball = (struct Ball) {
-		ballImage.x, ballImage.y, 0, 0, 2.0f, 2.0f
-	};
+	// Initialize all the bouncing balls.
+	for(int i = 0; i < NUM_BALLS; i++)
+	{
+		// We don't want all the balls bouncing in the same direction.
+		float xdir = RandomRange(1, 100) < 50 ? -1.0f : 1.0f;
+		float ydir = RandomRange(1, 100) < 50 ? -1.0f : 1.0f;
+
+		// We probably don't want them going all at the same speed either.
+		float speedx = RandomRange(1, 3);
+		float speedy = RandomRange(1, 3);
+
+		Balls[i] = (struct Ball) {
+			ballImage.x,
+			ballImage.y,
+			RandomRange(0, ViewW - ballImage.x),
+			RandomRange(0, ViewH - ballImage.y),
+			speedx * xdir,
+			speedy * ydir
+		};
+	}
 
 	// Create the background texture.
 	unsigned int bgTexId = rCreateTexture (
@@ -207,8 +283,8 @@ int main(int argc, char *argv[])
 
 	// Calculate the s/t coords based on the window dimentsions so we get a
 	//	nice tiling effect.
-	float s = (float)WINDOW_W / (float)bgImage.x;
-	float t = (float)WINDOW_H / (float)bgImage.y;
+	float s = (float)ViewW / (float)bgImage.x;
+	float t = (float)ViewH / (float)bgImage.y;
 
 	// An offset we modify the uvs by to achive a scrolling effect.
 	float scrollDelta = 0.0f;
@@ -232,8 +308,8 @@ int main(int argc, char *argv[])
 		rDraw (
 			0,
 			0,
-			WINDOW_W,
-			WINDOW_H,
+			ViewW,
+			ViewH,
 			scrollDelta,
 			scrollDelta,
 			s + scrollDelta,
@@ -252,11 +328,14 @@ int main(int argc, char *argv[])
 		// Set the ball texture.
 		rSetTexture(ballTexId);
 
-		// Draw the ball.
-		rDraw(ball.x, ball.y, ballImage.x, ballImage.y, 0, 0, 1, 1);
-
-		// Animate the ball.
-		BounceBall(&ball);
+		// Loop through all the balls, and draw them.
+		for(int i = 0; i < NUM_BALLS; i++)
+		{
+			// Draw the ball.
+			rDraw (
+				Balls[i].x, Balls[i].y, ballImage.x, ballImage.y, 0, 0, 1, 1
+			);
+		}
 
 		// Lets draw the title.
 		rSetTexture(titleTexId);
@@ -267,8 +346,22 @@ int main(int argc, char *argv[])
 		// Finish the render batch.
 		rEnd();
 
+		// Loop through all the balls, and animate them.
+		for(int i = 0; i < NUM_BALLS; i++)
+		{
+			// Animate the ball.
+			BounceBall(&Balls[i]);
+		}
+
 		// Swap to screen.
 		SDL_GL_SwapWindow(RenderWindow);
+
+		// Calculate the FPS
+		CurTicks = SDL_GetTicks();
+		TickDelta = CurTicks - LastTicks;
+		LastTicks = CurTicks;
+		FrameTime = FPSAccuracy * TickDelta + (1.0 - FPSAccuracy) * FrameTime;
+		FPS = 1000.0 / FrameTime;
 	}
 
 	// Free up the texture.
@@ -276,6 +369,9 @@ int main(int argc, char *argv[])
 
 	// Quit the engine.
 	rQuit();
+
+	// Log out the final fps value. (Try taking off vsync!)
+	rLogInfo("Final FPS: %f", FPS);
 
 	// Free up SDL for a clean exit.
 	SDL_GL_DeleteContext(RenderContext);
