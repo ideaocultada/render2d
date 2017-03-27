@@ -120,35 +120,19 @@ static void InitSDL()
 	{
 		goto sdl_error__;
 	}
+	int flags = SDL_WINDOW_OPENGL;
 	if(USE_FULLSCREEN)
 	{
-		// For fullscreen mode we detect your monitors current res,
-		//	and set the window to that size.
-		SDL_DisplayMode current;
-		if(SDL_GetCurrentDisplayMode(0, &current))
-		{
-			goto sdl_error__;
-		}
-		RenderWindow = SDL_CreateWindow (
-			"Simple",
-			SDL_WINDOWPOS_CENTERED,
-			SDL_WINDOWPOS_CENTERED,
-			WINDOW_W,
-			WINDOW_H,
-			SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN
-		);
+		flags |= SDL_WINDOW_FULLSCREEN;
 	}
-	else
-	{
-		RenderWindow = SDL_CreateWindow (
-			"Simple",
-			SDL_WINDOWPOS_CENTERED,
-			SDL_WINDOWPOS_CENTERED,
-			WINDOW_W,
-			WINDOW_H,
-			SDL_WINDOW_OPENGL
-		);
-	}
+	RenderWindow = SDL_CreateWindow (
+		"Simple",
+		SDL_WINDOWPOS_CENTERED,
+		SDL_WINDOWPOS_CENTERED,
+		WINDOW_W,
+		WINDOW_H,
+		flags
+	);
 	if(!RenderWindow)
 	{
 		goto sdl_error__;
