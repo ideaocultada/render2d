@@ -15,7 +15,7 @@
 #define USE_VSYNC	1
 #define USE_AA		1
 #define ANIO_LEVEL	4
-#define USE_FULLSCREEN true
+#define USE_FULLSCREEN false
 
 // Number of bouncing ball sprites to render.
 #define NUM_BALLS 20
@@ -53,9 +53,6 @@ static bool QuitFlag = false;
 // Some SDL data we want to keep a hold of.
 static SDL_Window *RenderWindow = NULL;
 static SDL_GLContext RenderContext = NULL;
-
-// Dimensions of the current view. Use these instead of the constants.
-static unsigned int ViewW = 0, ViewH = 0;
 
 // FPS counter based on method described here:
 //	http://sdl.beuc.net/sdl.wiki/SDL_Average_FPS_Measurement
@@ -136,12 +133,10 @@ static void InitSDL()
 			"Simple",
 			SDL_WINDOWPOS_CENTERED,
 			SDL_WINDOWPOS_CENTERED,
-			current.w,
-			current.h,
+			WINDOW_W,
+			WINDOW_H,
 			SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN
 		);
-		ViewW = current.w;
-		ViewH = current.h;
 	}
 	else
 	{
@@ -153,8 +148,6 @@ static void InitSDL()
 			WINDOW_H,
 			SDL_WINDOW_OPENGL
 		);
-		ViewW = WINDOW_W;
-		ViewH = WINDOW_H;
 	}
 	if(!RenderWindow)
 	{
@@ -209,11 +202,11 @@ static void BounceBall(struct Ball *ball)
 {
 	ball->x += ball->dx;
 	ball->y += ball->dy;
-	if(ball->x < 0.0f || ball->x + ball->w > ViewW)
+	if(ball->x < 0.0f || ball->x + ball->w > WINDOW_W)
 	{
 		ball->dx *= -1.0f;
 	}
-	if(ball->y < 0.0f || ball->y + ball->h > ViewH)
+	if(ball->y < 0.0f || ball->y + ball->h > WINDOW_H)
 	{
 		ball->dy *= -1.0f;
 	}
@@ -228,7 +221,7 @@ int main(int argc, char *argv[])
 	// Init everything.
 	InitSDL();
 	rInit();
-	rSetViewport(ViewW, ViewH);
+	rSetViewport(WINDOW_W, WINDOW_H);
 
 	// Our image variables.
 	struct Image bgImage, titleImage, ballImage;
@@ -252,8 +245,8 @@ int main(int argc, char *argv[])
 		Balls[i] = (struct Ball) {
 			ballImage.x,
 			ballImage.y,
-			RandomRange(0, ViewW - ballImage.x),
-			RandomRange(0, ViewH - ballImage.y),
+			RandomRange(0, WINDOW_W - ballImage.x),
+			RandomRange(0, WINDOW_H - ballImage.y),
 			speedx * xdir,
 			speedy * ydir
 		};
@@ -281,8 +274,8 @@ int main(int argc, char *argv[])
 
 	// Calculate the s/t coords based on the window dimentsions so we get a
 	//	nice tiling effect.
-	float s = (float)ViewW / (float)bgImage.x;
-	float t = (float)ViewH / (float)bgImage.y;
+	float s = (float)WINDOW_W / (float)bgImage.x;
+	float t = (float)WINDOW_H / (float)bgImage.y;
 
 	// An offset we modify the uvs by to achive a scrolling effect.
 	float scrollDelta = 0.0f;
@@ -306,8 +299,8 @@ int main(int argc, char *argv[])
 		rDraw (
 			0,
 			0,
-			ViewW,
-			ViewH,
+			WINDOW_W,
+			WINDOW_H,
 			scrollDelta,
 			scrollDelta,
 			s + scrollDelta,
