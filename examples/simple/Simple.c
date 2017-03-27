@@ -15,7 +15,7 @@
 #define USE_VSYNC	1
 #define USE_AA		1
 #define ANIO_LEVEL	4
-#define USE_FULLSCREEN false
+#define USE_FULLSCREEN true
 
 // Number of bouncing ball sprites to render.
 #define NUM_BALLS 20
@@ -140,12 +140,8 @@ static void InitSDL()
 			current.h,
 			SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN
 		);
-
-		// Because high-dpi monitors may have a different virtual display size
-		//	than the actual display resolution, we use this function to get the
-		//	the actual pixel dimentisons of the monitor.
-		SDL_GL_GetDrawableSize(RenderWindow, &ViewW, &ViewH);
-		rLogInfo("ViewW: %u, ViewH: %u", ViewW, ViewH);
+		ViewW = current.w;
+		ViewH = current.h;
 	}
 	else
 	{
