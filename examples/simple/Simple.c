@@ -29,6 +29,9 @@
 // Path to the ball image.
 #define BALL_IMAGE_PATH "examples/data/ball.png"
 
+// Path to the test font image.
+#define FONT_IMAGE_PATH "examples/data/font.png"
+
 // We can use booleans.
 #include <stdbool.h>
 
@@ -41,11 +44,17 @@
 
 // Our Render2d modules.
 #include "../../src/rLogger.h"
+#include "../../src/rMath.h"
+#include "../../src/rFrame.h"
+#include "../../src/rText.h"
 #include "../../src/Render2d.h"
 
 // The STB image loader.
 #define STB_IMAGE_IMPLEMENTATION
 #include "../../stb/stb_image.h"
+
+// 256 frames for our ASCII font.
+static struct rFrame FontFrames[256];
 
 // When this is true, quit the program.
 static bool QuitFlag = false;
@@ -199,6 +208,9 @@ static void BounceBall(struct Ball *ball)
 // This is where the magic happens.
 int main(int argc, char *argv[])
 {
+	// A nice text buffer to contain our FPS readout.
+	char fpsStr[32] = "";
+
 	// Kick off random number generator.
 	srand(time(NULL));
 
@@ -208,12 +220,20 @@ int main(int argc, char *argv[])
 	rSetViewport(WINDOW_W, WINDOW_H);
 
 	// Our image variables.
-	struct Image bgImage, titleImage, ballImage;
+	struct Image bgImage, titleImage, ballImage, fontImage;
+
+	// Font frame set.
+	struct rFrameSet fontFrameSet = {
+		.frames = FontFrames,
+		.numFrames = 256
+	};
+	rInitFrameSetAsGrid(&fontFrameSet, 16, 16, 16, 16);
 
 	// Load our image assets.
 	LoadImage(&bgImage, BG_IMAGE_PATH);
 	LoadImage(&titleImage, TITLE_IMAGE_PATH);
 	LoadImage(&ballImage, BALL_IMAGE_PATH);
+	LoadImage(&fontImage, FONT_IMAGE_PATH);
 
 	// Initialize all the bouncing balls.
 	for(int i = 0; i < NUM_BALLS; i++)
@@ -226,6 +246,7 @@ int main(int argc, char *argv[])
 		float speedx = RandomRange(1, 3);
 		float speedy = RandomRange(1, 3);
 
+		// Init the ball.
 		Balls[i] = (struct Ball) {
 			ballImage.x,
 			ballImage.y,
@@ -251,10 +272,15 @@ int main(int argc, char *argv[])
 		ballImage.x, ballImage.y, ballImage.n, ballImage.pixels
 	);
 
+	unsigned int fontTexId = rCreateTexture (
+		fontImage.x, fontImage.y, fontImage.n, fontImage.pixels
+	);
+
 	// We don't need the image data any more so release it.
 	FreeImage(&bgImage);
 	FreeImage(&titleImage);
 	FreeImage(&ballImage);
+	FreeImage(&fontImage);
 
 	// Calculate the s/t coords based on the window dimentsions so we get a
 	//	nice tiling effect.
@@ -272,6 +298,9 @@ int main(int argc, char *argv[])
 
 		// Clear the scene.
 		rClear();
+
+		// Copy the current FPS value to our FPS string.
+		snprintf(fpsStr, 32, "FPS: %1.2f", FPS);
 
 		// Begin a new render batch.
 		rBegin();
@@ -317,6 +346,12 @@ int main(int argc, char *argv[])
 
 		// Draw the title image.
 		rDraw(16, -16, titleImage.x, titleImage.y, 0, 0, 1, 1);
+
+		// Set the font texture.
+		rSetTexture(fontTexId);
+
+		// Draw text with our font.
+		rDrawText(fontFrameSet.frames, fpsStr, 16, WINDOW_H - 24, -6, 16);
 
 		// Finish the render batch.
 		rEnd();
