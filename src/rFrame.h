@@ -14,11 +14,9 @@
 // This defines a frame you can use to draw with.
 struct rFrame
 {
-	// Sometimes you want to offset the frames origin.
-	struct rPointf offset;
-
-	// Actual pixel w/h of the frame.
-	struct rPointf bounds;
+	// x, y are the offset of the frame, and w, h are the dimensions of the
+	//	frame.
+	struct rRectf bounds;
 
 	// The image revion (uvs) the frame draws.
 	struct rRectf region;

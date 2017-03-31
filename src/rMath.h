@@ -34,3 +34,43 @@ struct rRectf
 {
 	float x, y, w, h;
 };
+
+static inline float rRectfLeft(struct rRectf *r)
+{
+	return r->x;
+}
+
+static inline float rRectfTop(struct rRectf *r)
+{
+	return r->y;
+}
+
+static inline float rRectfRight(struct rRectf *r)
+{
+	return r->x + r->w;
+}
+
+static inline float rRectfBottom(struct rRectf *r)
+{
+	return r->y + r->h;
+}
+
+static inline float rRectLeft(struct rRect *r)
+{
+	return r->x;
+}
+
+static inline float rRectTop(struct rRect *r)
+{
+	return r->y;
+}
+
+static inline float rRectRight(struct rRect *r)
+{
+	return r->x + r->w;
+}
+
+static inline float rRectBottom(struct rRect *r)
+{
+	return r->y + r->h;
+}

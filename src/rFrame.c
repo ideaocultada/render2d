@@ -19,10 +19,8 @@
 
 void rInitFrame(struct rFrame *frame)
 {
-	frame->offset = (struct rPointf) { 0, 0 };
-
 	// We init the size of every frame to something visible.
-	frame->bounds = (struct rPointf) { 64, 64 };
+	frame->bounds = (struct rRectf) { 0, 0, 64, 64 };
 
 	// Frames use the x,y,w,h variables of the rect as u,v,s,t.
 	frame->region = (struct rRectf) { 0, 0, 1, 1 };
@@ -31,10 +29,10 @@ void rInitFrame(struct rFrame *frame)
 void rDrawFrame(struct rFrame *frame, float x, float y)
 {
 	rDraw (
-		x + frame->offset.x,
-		y + frame->offset.y,
-		frame->bounds.x,
-		frame->bounds.y,
+		x + frame->bounds.x,
+		y + frame->bounds.y,
+		frame->bounds.w,
+		frame->bounds.h,
 		frame->region.x,
 		frame->region.y,
 		frame->region.w,
@@ -57,8 +55,7 @@ void rInitFrameSetAsGrid (
 )
 {
 	struct rFrame frame = {
-		.offset = { 0, 0},
-		.bounds = { w, h }
+		.bounds = { 0, 0, w, h }
 	};
 	float uincr = 1.0f/(float)cols;
 	float vincr = 1.0f/(float)rows;

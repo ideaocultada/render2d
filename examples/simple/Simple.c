@@ -47,6 +47,8 @@
 #include "../../src/rMath.h"
 #include "../../src/rFrame.h"
 #include "../../src/rText.h"
+#include "../../src/rSprite.h"
+#include "../../src/rNode.h"
 #include "../../src/Render2d.h"
 
 // The STB image loader.
@@ -80,15 +82,11 @@ struct Image
 	unsigned char *pixels;
 };
 
-// Data for the ball.
-struct Ball
-{
-	int w, h;
-	float x, y, dx, dy;
-};
+// The ball sprite itself.
+struct rSprite BallSprite;
 
 // An array with all the balls we are going to render.
-static struct Ball Balls[NUM_BALLS];
+static struct rNode Balls[NUM_BALLS];
 
 // Returns a random number in the given range.
 static int RandomRange(int min, int max)
@@ -191,15 +189,20 @@ static void HandleSDLEvents()
 }
 
 // This function takes care of bouncing the ball off the edges of the screen.
-static void BounceBall(struct Ball *ball)
+static void BounceBall(struct rNode *ball)
 {
-	ball->x += ball->dx;
-	ball->y += ball->dy;
-	if(ball->x < 0.0f || ball->x + ball->w > WINDOW_W)
+	rUpdateNode(ball);
+	if (
+		ball->x < 0.0f ||
+		ball->x + ball->sprite->singleFrame.frame.bounds.w > WINDOW_W
+	)
 	{
 		ball->dx *= -1.0f;
 	}
-	if(ball->y < 0.0f || ball->y + ball->h > WINDOW_H)
+	if (
+		ball->y < 0.0f ||
+		ball->y + ball->sprite->singleFrame.frame.bounds.h > WINDOW_H
+	)
 	{
 		ball->dy *= -1.0f;
 	}
@@ -235,28 +238,6 @@ int main(int argc, char *argv[])
 	LoadImage(&ballImage, BALL_IMAGE_PATH);
 	LoadImage(&fontImage, FONT_IMAGE_PATH);
 
-	// Initialize all the bouncing balls.
-	for(int i = 0; i < NUM_BALLS; i++)
-	{
-		// We don't want all the balls bouncing in the same direction.
-		float xdir = RandomRange(1, 100) < 50 ? -1.0f : 1.0f;
-		float ydir = RandomRange(1, 100) < 50 ? -1.0f : 1.0f;
-
-		// We probably don't want them going all at the same speed either.
-		float speedx = RandomRange(1, 3);
-		float speedy = RandomRange(1, 3);
-
-		// Init the ball.
-		Balls[i] = (struct Ball) {
-			ballImage.x,
-			ballImage.y,
-			RandomRange(0, WINDOW_W - ballImage.x),
-			RandomRange(0, WINDOW_H - ballImage.y),
-			speedx * xdir,
-			speedy * ydir
-		};
-	}
-
 	// Create the background texture.
 	unsigned int bgTexId = rCreateTexture (
 		bgImage.x, bgImage.y, bgImage.n, bgImage.pixels
@@ -275,6 +256,33 @@ int main(int argc, char *argv[])
 	unsigned int fontTexId = rCreateTexture (
 		fontImage.x, fontImage.y, fontImage.n, fontImage.pixels
 	);
+
+	// Init the ball sprite.
+	rInitSprite(&BallSprite, R_SPRITE_TYPE_SINGLE_FRAME);
+	BallSprite.texId = ballTexId;
+	BallSprite.texId = ballTexId;
+	BallSprite.singleFrame.frame.bounds.w = ballImage.x;
+	BallSprite.singleFrame.frame.bounds.h = ballImage.y;
+
+	// Initialize all the bouncing balls.
+	for(int i = 0; i < NUM_BALLS; i++)
+	{
+		// We don't want all the balls bouncing in the same direction.
+		float xdir = RandomRange(1, 100) < 50 ? -1.0f : 1.0f;
+		float ydir = RandomRange(1, 100) < 50 ? -1.0f : 1.0f;
+
+		// We probably don't want them going all at the same speed either.
+		float speedx = RandomRange(1, 3);
+		float speedy = RandomRange(1, 3);
+
+		// Init the ball.
+		rInitNode(&Balls[i]);
+		Balls[i].sprite = &BallSprite;
+		Balls[i].x = RandomRange(0, WINDOW_W - ballImage.x);
+		Balls[i].y = RandomRange(0, WINDOW_H - ballImage.y);
+		Balls[i].dx = speedx * xdir;
+		Balls[i].dy = speedy * ydir;
+	}
 
 	// We don't need the image data any more so release it.
 	FreeImage(&bgImage);
@@ -336,9 +344,7 @@ int main(int argc, char *argv[])
 		for(int i = 0; i < NUM_BALLS; i++)
 		{
 			// Draw the ball.
-			rDraw (
-				Balls[i].x, Balls[i].y, ballImage.x, ballImage.y, 0, 0, 1, 1
-			);
+			rDrawNode(&Balls[i]);
 		}
 
 		// Lets draw the title.

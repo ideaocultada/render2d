@@ -63,7 +63,7 @@ void rDrawText (
 
 			// Offset the cursorX position.
 			cursorX += (
-				font[charIndex].bounds.x
+				font[charIndex].bounds.w
 			) + letting;
 		}
 	}
