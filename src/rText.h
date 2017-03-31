@@ -23,3 +23,10 @@ void rDrawText (
 	float letting,
 	float kerning
 );
+
+struct rRectf rCalcTextBounds (
+	struct rFrame *font,
+	const char *text,
+	float letting,
+	float kerning
+);

@@ -33,6 +33,16 @@ struct rRectf rCalcSpriteBounds(struct rSprite *sprite)
 			].bounds;
 			break;
 		case R_SPRITE_TYPE_TEXT_AREA:
+			if(sprite->textArea.font && sprite->textArea.text)
+			{
+				return rCalcTextBounds(
+					sprite->textArea.font,
+					sprite->textArea.text,
+					sprite->textArea.letting,
+					sprite->textArea.kerning
+				);
+			}
+			break;
 		default:
 			break;
 	}
