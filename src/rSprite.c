@@ -20,9 +20,23 @@
 #include "Render2d.h"
 
 // Calculate the bounds of the sprite.
-struct rRect rCalcSpriteBounds(struct rSprite *sprite)
+struct rRectf rCalcSpriteBounds(struct rSprite *sprite)
 {
-	return (struct rRect) { 0, 0, 0, 0 };
+	switch(sprite->type)
+	{
+		case R_SPRITE_TYPE_SINGLE_FRAME:
+			return sprite->singleFrame.frame.bounds;
+			break;
+		case R_SPRITE_TYPE_FRAME_SET:
+			return sprite->frameSet.frameSet->frames [
+				sprite->frameSet.curFrameIndex
+			].bounds;
+			break;
+		case R_SPRITE_TYPE_TEXT_AREA:
+		default:
+			break;
+	}
+	return (struct rRectf) { 0, 0, 0, 0 };
 }
 
 void rInitSprite(struct rSprite *sprite, unsigned char type)

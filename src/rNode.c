@@ -44,5 +44,12 @@ void rDrawNode(struct rNode *node)
 
 struct rRectf rCalcNodeBounds(struct rNode *node)
 {
-	return (struct rRectf) { 0.0f, 0.0f, 0.0f, 0.0f };
+	if(node->sprite)
+	{
+		struct rRectf r = rCalcSpriteBounds(node->sprite);
+		r.x += node->x;
+		r.y += node->y;
+		return r;
+	}
+	return (struct rRectf) { node->x, node->y, 0.0f, 0.0f };
 }

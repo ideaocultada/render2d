@@ -192,17 +192,12 @@ static void HandleSDLEvents()
 static void BounceBall(struct rNode *ball)
 {
 	rUpdateNode(ball);
-	if (
-		ball->x < 0.0f ||
-		ball->x + ball->sprite->singleFrame.frame.bounds.w > WINDOW_W
-	)
+	struct rRectf r = rCalcNodeBounds(ball);
+	if(r.x < 0.0f || rRectfRight(&r) > WINDOW_W)
 	{
 		ball->dx *= -1.0f;
 	}
-	if (
-		ball->y < 0.0f ||
-		ball->y + ball->sprite->singleFrame.frame.bounds.h > WINDOW_H
-	)
+	if(r.y < 0.0f || rRectfBottom(&r) > WINDOW_H)
 	{
 		ball->dy *= -1.0f;
 	}

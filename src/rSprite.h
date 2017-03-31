@@ -59,4 +59,4 @@ void rInitSprite(struct rSprite *sprite, unsigned char type);
 void rDrawSprite(struct rSprite *sprite, float x, float y);
 
 // Calculate the bounds of the sprite.
-struct rRect rCalcSpriteBounds(struct rSprite *sprite);
+struct rRectf rCalcSpriteBounds(struct rSprite *sprite);
