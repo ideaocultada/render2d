@@ -10,3 +10,23 @@
 */
 
 #pragma once
+
+// This expects an array of 256 frames. Each frame containing a glyph. It will
+//	use these frames to render the given text to the screen.
+//	Adjusting the letting makes the letters closer together or farther appart.
+//	Adjusting the kerning makes the lines closer together or farther appart.
+void rexDrawText (
+	struct rexFrame *font,
+	const char *text,
+	float x,
+	float y,
+	float letting,
+	float kerning
+);
+
+struct rexRectf rexCalcTextBounds (
+	struct rexFrame *font,
+	const char *text,
+	float letting,
+	float kerning
+);

@@ -1,5 +1,5 @@
 /*
-	rexFrameSet.h
+	rexSDLTools.c
 
 	Copyright 2017 (c) Michael Cabral.
 
@@ -8,15 +8,3 @@
 	Please refer to the LICENSE file included with this source code. You can
 	also find details here: https://opensource.org/licenses/BSD-3-Clause
 */
-
-#pragma once
-
-// A basic frame set.
-struct rexFrameSet
-{
-	// Pointer to memory housing the frames.
-	struct rexFrame *frames;
-
-	// Amount of frames in this set.
-	unsigned int numFrames;
-};

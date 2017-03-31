@@ -21,13 +21,3 @@ struct rexFrame
 	// The image revion (uvs) the frame draws.
 	struct rexRectf region;
 };
-
-// A basic frame set.
-struct rexFrameSet
-{
-	// Pointer to memory housing the frames.
-	struct rexFrame *frames;
-
-	// Amount of frames in this set.
-	unsigned int numFrames;
-};
