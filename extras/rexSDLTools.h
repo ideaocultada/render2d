@@ -16,7 +16,11 @@ float rexGetFPS();
 
 // Sets up an SDL2 based environment.
 void rexInitSDL (
-	const char *title, unsigned int w, unsigned int h, bool fullscreen
+	const char *title,
+	unsigned int w,
+	unsigned int h,
+	int vsync,
+	int fullscreen
 );
 
 // Swaps the SDL2 window to the screen.
