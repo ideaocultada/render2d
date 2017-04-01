@@ -45,16 +45,16 @@ void rexLogPrint(int logType, const char *fmt, ...)
 	switch(logType)
 	{
 		case REX_LOG_INFO:
-			if(LogFilePtr) fprintf(LogFilePtr, "[rInfo]: ");
-			fprintf(stdout, "[rInfo]: ");
+			if(LogFilePtr) fprintf(LogFilePtr, "[Info]: ");
+			fprintf(stdout, "[Info]: ");
 			break;
 		case REX_LOG_WARNING:
-			if(LogFilePtr) fprintf(LogFilePtr, "[rWarning]: ");
-			fprintf(stdout, "[rWarning]: ");
+			if(LogFilePtr) fprintf(LogFilePtr, "[Warning]: ");
+			fprintf(stdout, "[Warning]: ");
 			break;
 		case REX_LOG_ERROR:
-			if(LogFilePtr) fprintf(LogFilePtr, "[rError]: ");
-			fprintf(stderr, "[rError]: ");
+			if(LogFilePtr) fprintf(LogFilePtr, "[Error]: ");
+			fprintf(stderr, "[Error]: ");
 			break;
 		default:
 			break;
