@@ -32,9 +32,50 @@
 	#error unsupported platform!
 #endif
 
-// Our little logging utility.
-#include "rLogger.h"
-#include "rGLCheck.h"
+#ifndef R_NO_GLCHECK
+static void rDoGLCheck(const char *file, const char *func, unsigned int ln)
+{
+	GLenum errCode = glGetError();
+
+	if(errCode == GL_NO_ERROR) return;
+
+	switch(errCode)
+	{
+		case GL_INVALID_ENUM:
+			fprintf(stdout, "GL Error: GL_INVALID_ENUM\n '%s' %s():%u\n",
+				file, func, ln);
+			break;
+
+		case GL_INVALID_VALUE:
+			fprintf(stdout, "GL Error: GL_INVALID_VALUE\n '%s' %s():%u\n",
+				file, func, ln);
+			break;
+
+		case GL_INVALID_OPERATION:
+			fprintf(stdout, "GL Error: GL_INVALID_OPERATION\n '%s' %s():%u\n",
+				file, func, ln);
+			break;
+
+		case GL_OUT_OF_MEMORY:
+			fprintf(stdout, "GL Error: GL_OUT_OF_MEMORY\n '%s' %s():%u\n",
+				file, func, ln);
+			break;
+
+		case GL_INVALID_FRAMEBUFFER_OPERATION_EXT:
+			fprintf(stdout, "GL Error: GL_INVALID_FRAMEBUFFER_OPERATION_EXT\n"
+				" '%s' %s():%u", file, func, ln);
+			break;
+
+		default:
+			fprintf(stdout, "GL Error: Unknown (%u)\n '%s' %s():%u\n",
+				errCode, file, func, ln);
+			break;
+	}
+}
+#define rGLCheck() rDoGLCheck(__FILE__, __PRETTY_FUNCTION__, __LINE__)
+#else
+#define rGLCheck()
+#endif
 
 // This is where the party is at.
 #include "Render2d.h"
@@ -171,9 +212,9 @@ static void CompileShaderText (
 	GLuint programId, GLuint shaderId, const char *str
 )
 {
-	glShaderSource(shaderId, 1, &str, NULL);
-	glCompileShader(shaderId);
-	glAttachShader(programId, shaderId);
+	glShaderSource(shaderId, 1, &str, NULL); rGLCheck();
+	glCompileShader(shaderId); rGLCheck();
+	glAttachShader(programId, shaderId); rGLCheck();
 }
 
 void rInit()
@@ -190,60 +231,60 @@ void rInit()
 	// Make sure we have a compatible version of OpenGL available
 	if (GLEW_VERSION_2_1)
 	{
-		rLogInfo("OpenGL 2.1 is supported.");
+		fprintf(stdout, "OpenGL 2.1 is supported.\n");
 	}
 	else
 	{
-		rLogError("This program requires at least OpenGL 2.1 compatible"
-			"hardware.");
+		fprintf(stdout, "This program requires at least OpenGL 2.1 compatible"
+			"hardware.\n");
 		exit(-1);
 	}
 #endif
 
 	// Set up OpenGL to its default values.
-	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_BLEND);
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_CULL_FACE);
-	glFrontFace(GL_CCW);
-	glEnable(GL_MULTISAMPLE);
-	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &MaxAniostrophyLevel);
+	glClearColor(0.5f, 0.5f, 0.5f, 1.0f); rGLCheck();
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); rGLCheck();
+	glEnable(GL_BLEND); rGLCheck();
+	glDisable(GL_DEPTH_TEST); rGLCheck();
+	glDisable(GL_CULL_FACE); rGLCheck();
+	glFrontFace(GL_CCW); rGLCheck();
+	glEnable(GL_MULTISAMPLE); rGLCheck();
+	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &MaxAniostrophyLevel); rGLCheck();
 
 	// Create the vertex buffers.
 	glGenBuffers(NUM_VBOS, VertexBufferIds);
 
 	// Create the standard shader.
-	StdShader.shaderId = glCreateProgram();
-	GLuint vertShaderId = glCreateShader(GL_VERTEX_SHADER);
-	GLuint fragShaderId = glCreateShader(GL_FRAGMENT_SHADER);
+	StdShader.shaderId = glCreateProgram(); rGLCheck();
+	GLuint vertShaderId = glCreateShader(GL_VERTEX_SHADER); rGLCheck();
+	GLuint fragShaderId = glCreateShader(GL_FRAGMENT_SHADER); rGLCheck();
 	CompileShaderText(StdShader.shaderId, vertShaderId, StdShaderText.vert);
 	CompileShaderText(StdShader.shaderId, fragShaderId, StdShaderText.frag);
-	glDeleteShader(vertShaderId);
-	glDeleteShader(fragShaderId);
+	glDeleteShader(vertShaderId); rGLCheck();
+	glDeleteShader(fragShaderId); rGLCheck();
 	glBindAttribLocation (
 		StdShader.shaderId,
 		ATTRIB_VERTEX,
 		ATTRIB_VERTEX_NAME
-	);
+	); rGLCheck();
 	glBindAttribLocation (
 		StdShader.shaderId,
 		ATTRIB_TEXTURE,
 		ATTRIB_TEX_COORD_NAME
-	);
-	glLinkProgram(StdShader.shaderId);
+	); rGLCheck();
+	glLinkProgram(StdShader.shaderId); rGLCheck();
 	StdShader.tex0Loc = glGetUniformLocation (
 		StdShader.shaderId, TEX0_UNIFORM_NAME
-	);
+	); rGLCheck();
 
 	// Log friendly init message.
-	rLogInfo("Render2d initialized.")
+	fprintf(stdout, "Render2d initialized.\n");
 }
 
 void rQuit()
 {
-	glDeleteBuffers(NUM_VBOS, VertexBufferIds);
-	glDeleteProgram(StdShader.shaderId);
+	glDeleteBuffers(NUM_VBOS, VertexBufferIds); rGLCheck();
+	glDeleteProgram(StdShader.shaderId); rGLCheck();
 }
 
 void rSetViewport(unsigned w, unsigned h)
@@ -252,17 +293,17 @@ void rSetViewport(unsigned w, unsigned h)
 	HalfViewportH = (float)h * 0.5f;
 	ViewPortScaleW = 2.0f/(float)w;
 	ViewPortScaleH = 2.0f/(float)h;
-	glViewport(0, 0, w, h);
+	glViewport(0, 0, w, h); rGLCheck();
 }
 
 void rSetClearColor(float r, float g, float b, float a)
 {
-	glClearColor(r, g, b, a);
+	glClearColor(r, g, b, a); rGLCheck();
 }
 
 void rClear()
 {
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT); rGLCheck();
 }
 
 void rBegin()
@@ -271,17 +312,17 @@ void rBegin()
 	// Abort begin if already batching.
 	if(IsBatching)
 	{
-		rLogWarning("Aborting rBegin. Batch already started!");
+		fprintf(stdout, "Aborting rBegin. Batch already started!\n");
 		return;
 	}
 #endif
 
 	NeedsANewDrawCall = true;
-	glEnableVertexAttribArray(ATTRIB_VERTEX);
-	glEnableVertexAttribArray(ATTRIB_TEXTURE);
+	glEnableVertexAttribArray(ATTRIB_VERTEX); rGLCheck();
+	glEnableVertexAttribArray(ATTRIB_TEXTURE); rGLCheck();
 
 	// Bind the current buffer and move the index up.
-	glBindBuffer(GL_ARRAY_BUFFER, VertexBufferIds[CurVertexBufferIndex]);
+	glBindBuffer(GL_ARRAY_BUFFER, VertexBufferIds[CurVertexBufferIndex]); rGLCheck();
 	if(++CurVertexBufferIndex >= NUM_VBOS) CurVertexBufferIndex = 0;
 
 	glVertexAttribPointer (
@@ -291,7 +332,7 @@ void rBegin()
 		0,
 		sizeof(GLfloat) * 4,
 		0
-	);
+	); rGLCheck();
 	glVertexAttribPointer (
 		ATTRIB_TEXTURE,
 		2,
@@ -299,7 +340,7 @@ void rBegin()
 		0,
 		sizeof(GLfloat) * 4,
 		(void*)(sizeof(GLfloat) * 2)
-	);
+	); rGLCheck();
 	DrawCalls[0].startIndex = 0;
 	DrawCalls[0].numElements = 0;
 	InitMaterial(&DrawCalls[0].material);
@@ -314,31 +355,31 @@ unsigned int rCreateTexture (
 	// Prevent the creation of textures during a batch.
 	if(IsBatching)
 	{
-		rLogWarning("Aborting rCreateTexture. Cannot create textures while "
-			"batching.");
+		fprintf(stdout, "Aborting rCreateTexture. Cannot create textures"
+			"while batching.\n");
 		return 0;
 	}
 #endif
 
 	GLuint texId = 0;
-	glEnable(GL_TEXTURE_2D);
-	glGenTextures(1, &texId);
-	glBindTexture(GL_TEXTURE_2D, texId);
+	glEnable(GL_TEXTURE_2D); rGLCheck();
+	glGenTextures(1, &texId); rGLCheck();
+	glBindTexture(GL_TEXTURE_2D, texId); rGLCheck();
 	switch(n)
 	{
 		case 4:
-			rLogInfo("Created an RGBA texture: %u", texId);
+			fprintf(stdout, "Created an RGBA texture: %u\n", texId);
 			glTexImage2D(GL_TEXTURE_2D, 0, n, w, h, 0, GL_RGBA,
-				GL_UNSIGNED_BYTE, pixels);
+				GL_UNSIGNED_BYTE, pixels); rGLCheck();
 			break;
 		case 3:
-			rLogInfo("Created an RGB texture: %u", texId);
+			fprintf(stdout, "Created an RGB texture: %u\n", texId);
 			glTexImage2D(GL_TEXTURE_2D, 0, n, w, h, 0, GL_RGB,
-				GL_UNSIGNED_BYTE, pixels);
+				GL_UNSIGNED_BYTE, pixels); rGLCheck();
 			break;
 		default:
-			rLogWarning("Unknown value for texure elements: %u\n", n);
-			glDeleteTextures(1, &texId);
+			fprintf(stdout, "Unknown value for texure elements: %u\n", n);
+			glDeleteTextures(1, &texId); rGLCheck();
 			return 0;
 			break;
 	}
@@ -351,12 +392,12 @@ void rDestroyTexture(unsigned int texId)
 	// Prevent the destruction of textures during a batch.
 	if(IsBatching)
 	{
-		rLogWarning("Aborting rDestroyTexture. Cannot destroy textures while "
-			"batching.");
+		fprintf(stdout, "Aborting rDestroyTexture. Cannot destroy textures "
+			"while batching.\n");
 		return;
 	}
 #endif
-	glDeleteTextures(1, &texId);
+	glDeleteTextures(1, &texId); rGLCheck();
 }
 
 void rSetTexture(unsigned int texId)
@@ -365,15 +406,15 @@ void rSetTexture(unsigned int texId)
 	// Prevent the setting a texture outside of a batch.
 	if(!IsBatching)
 	{
-		rLogWarning("Aborting rDestroyTexture. Cannot destroy textures while "
-			"batching.");
+		fprintf(stdout, "Aborting rDestroyTexture. Cannot destroy textures "
+			"while batching.\n");
 		return;
 	}
 
 	// Error out if we pass in a zero texture id.
 	if(!texId)
 	{
-		rLogWarning("Aborting rDestroyTexture. texId is zero!");
+		fprintf(stdout, "Aborting rDestroyTexture. texId is zero!\n");
 		return;
 	}
 #endif
@@ -390,7 +431,7 @@ static inline void Flush()
 		sizeof(GLfloat) * LastChangeIndex,
 		NULL,
 		GL_STREAM_DRAW
-	);
+	); rGLCheck();
 
 	// Upload the data.
 	glBufferData (
@@ -398,41 +439,41 @@ static inline void Flush()
 		sizeof(GLfloat) * LastChangeIndex,
 		VertexBufferData,
 		GL_STREAM_DRAW
-	);
+	); rGLCheck();
 
 	// Loop through all our draw calls.
 	for(unsigned int i = 0; i < NumDrawCalls; i++)
 	{
 		// Activate the standard shader.
-		glUseProgram(StdShader.shaderId);
+		glUseProgram(StdShader.shaderId); rGLCheck();
 
 		// Activate main tex channel.
-		glActiveTexture(GL_TEXTURE0);
+		glActiveTexture(GL_TEXTURE0); rGLCheck();
 
 		// Enable texturing.
-		glEnable(GL_TEXTURE_2D);
+		glEnable(GL_TEXTURE_2D); rGLCheck();
 
 		// Bind our texture.
-		glBindTexture(GL_TEXTURE_2D, DrawCalls[i].material.texId);
+		glBindTexture(GL_TEXTURE_2D, DrawCalls[i].material.texId); rGLCheck();
 
 		// Set the texture params.
 		glTexParameterf (
 			GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, MaxAniostrophyLevel
-		);
+		); rGLCheck();
 		glTexParameteri (
 			GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST
-		);
+		); rGLCheck();
 		glTexParameteri (
 			GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST
-		);
+		); rGLCheck();
 
 		// Set the tex0 uniform to 0.
-		glUniform1i(StdShader.tex0Loc, 0);
+		glUniform1i(StdShader.tex0Loc, 0); rGLCheck();
 
 		// Draw a segment of our geometry.
 		glDrawArrays (
 			GL_TRIANGLES, DrawCalls[i].startIndex, DrawCalls[i].numElements
-		);
+		); rGLCheck();
 	}
 }
 
@@ -444,7 +485,7 @@ void rDraw (
 	// Abort draw if not batching.
 	if(!IsBatching)
 	{
-		rLogWarning("Aborting rDraw. No batch not started!");
+		fprintf(stdout, "Aborting rDraw. No batch not started!\n");
 		return;
 	}
 #endif
@@ -457,7 +498,8 @@ void rDraw (
 		// If don't have a texture, abort the draw call and log a warning.
 		if(!PendingTextureId)
 		{
-			rLogWarning("Aborting rDraw. Material has no texture assigned!");
+			fprintf(stdout, "Aborting rDraw. Material has no texture "
+				"assigned!\n");
 			return;
 		}
 #endif
@@ -494,7 +536,7 @@ void rDraw (
 		NumDrawCalls = 1;
 
 		// Bind a new vertex buffer.
-		glBindBuffer(GL_ARRAY_BUFFER, VertexBufferIds[CurVertexBufferIndex]);
+		glBindBuffer(GL_ARRAY_BUFFER, VertexBufferIds[CurVertexBufferIndex]); rGLCheck();
 		if(++CurVertexBufferIndex >= NUM_VBOS) CurVertexBufferIndex = 0;
 	}
 
@@ -579,7 +621,7 @@ void rEnd()
 	// Abort draw if not batching.
 	if(!IsBatching)
 	{
-		rLogWarning("Aborting rEnd. No batch not started!");
+		fprintf(stdout, "Aborting rEnd. No batch not started!\n");
 		return;
 	}
 #endif
@@ -596,16 +638,16 @@ void rEnd()
 			sizeof(GLfloat) * LastChangeIndex,
 			NULL,
 			GL_STREAM_DRAW
-		);
+		); rGLCheck();
 		glBufferData (
 			GL_ARRAY_BUFFER,
 			sizeof(GLfloat) * LastChangeIndex,
 			VertexBufferData,
 			GL_STREAM_DRAW
-		);
+		); rGLCheck();
 	}
-	glDisableVertexAttribArray(ATTRIB_VERTEX);
-	glDisableVertexAttribArray(ATTRIB_TEXTURE);
+	glDisableVertexAttribArray(ATTRIB_VERTEX); rGLCheck();
+	glDisableVertexAttribArray(ATTRIB_TEXTURE); rGLCheck();
 
 	// Reset all our state variables.
 	NumDrawCalls = 0;
