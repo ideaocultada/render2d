@@ -15,6 +15,7 @@
 #include <string.h>
 
 #include "rexLogger.h"
+#include "rexImage.h"
 
 // The STB image loader.
 #define STB_IMAGE_IMPLEMENTATION

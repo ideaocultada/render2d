@@ -42,3 +42,6 @@ examples/bin/*
 .sconsign.dblite
 ehthumbs.db
 Thumbs.db
+
+# Misc.
+dep__/*

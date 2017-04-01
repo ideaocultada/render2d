@@ -21,3 +21,9 @@ struct rexFrame
 	// The image revion (uvs) the frame draws.
 	struct rexRectf region;
 };
+
+// Initialize a frame to its default values.
+void rexInitFrame(struct rexFrame *frame);
+
+// Draw the frame using our standard calls.
+void rexDrawFrame(struct rexFrame *frame, float x, float y);

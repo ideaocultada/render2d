@@ -13,7 +13,7 @@
 
 struct rexImage
 {
-	unsigned int w, h, n;
+	int w, h, n;
 	unsigned char *pixels;
 };
 

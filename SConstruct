@@ -34,6 +34,7 @@ if platform == "darwin":
 	env.VariantDir("build", ".", 0)
 
 	sources = Glob("build/src/*.c")
+	sources += Glob("build/extras/*.c")
 	sources += Glob("build/examples/Simple/*.c")
 
 	env.Program (
@@ -81,6 +82,7 @@ if platform == "win32":
 
 	sources = Glob("build/glew/*.c")
 	sources += Glob("build/src/*.c")
+	sources += Glob("build/extras/*.c")
 	sources += Glob("build/examples/Simple/*.c")
 
 	env.Program (

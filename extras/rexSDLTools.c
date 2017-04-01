@@ -12,8 +12,11 @@
 // The SDL2 library.
 #include <SDL2/SDL.h>
 
+#include "rexLogger.h"
+#include "rexError.h"
+
 // Our Render2d modules.
-#include "../../src/Render2d.h"
+#include "../src/Render2d.h"
 
 // Some SDL data we want to keep a hold of.
 static SDL_Window *RenderWindow = NULL;
@@ -43,11 +46,11 @@ void rexInitSDL (
 	{
 		goto sdl_error__;
 	}
-	if(SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, USE_AA))
+	if(SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1))
 	{
 		goto sdl_error__;
 	}
-	if(SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, ANIO_LEVEL))
+	if(SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4))
 	{
 		goto sdl_error__;
 	}
@@ -83,7 +86,8 @@ void rexInitSDL (
 
 	// Our error handling function which basically logs a message and exits.
 	sdl_error__:
-	rexFatalError("%s", SDL_GetError());
+	rexLogError("%s", SDL_GetError());
+	rexFatalError("SDL failed to initialize.");
 }
 
 void rexSwapWindow()
