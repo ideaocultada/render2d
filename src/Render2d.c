@@ -249,7 +249,8 @@ void rInit()
 	glDisable(GL_CULL_FACE); rGLCheck();
 	glFrontFace(GL_CCW); rGLCheck();
 	glEnable(GL_MULTISAMPLE); rGLCheck();
-	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &MaxAniostrophyLevel); rGLCheck();
+	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &MaxAniostrophyLevel);
+	rGLCheck();
 
 	// Create the vertex buffers.
 	glGenBuffers(NUM_VBOS, VertexBufferIds);
@@ -322,7 +323,8 @@ void rBegin()
 	glEnableVertexAttribArray(ATTRIB_TEXTURE); rGLCheck();
 
 	// Bind the current buffer and move the index up.
-	glBindBuffer(GL_ARRAY_BUFFER, VertexBufferIds[CurVertexBufferIndex]); rGLCheck();
+	glBindBuffer(GL_ARRAY_BUFFER, VertexBufferIds[CurVertexBufferIndex]);
+	rGLCheck();
 	if(++CurVertexBufferIndex >= NUM_VBOS) CurVertexBufferIndex = 0;
 
 	glVertexAttribPointer (
@@ -536,7 +538,8 @@ void rDraw (
 		NumDrawCalls = 1;
 
 		// Bind a new vertex buffer.
-		glBindBuffer(GL_ARRAY_BUFFER, VertexBufferIds[CurVertexBufferIndex]); rGLCheck();
+		glBindBuffer(GL_ARRAY_BUFFER, VertexBufferIds[CurVertexBufferIndex]);
+		rGLCheck();
 		if(++CurVertexBufferIndex >= NUM_VBOS) CurVertexBufferIndex = 0;
 	}
 
