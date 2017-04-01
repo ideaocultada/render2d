@@ -13,6 +13,8 @@
 //	R_NO_ERROR_CHECKING -- The renderer will do no error checking. Things can
 //		break this way if you do something dumb, but I suppose it will run a
 //		bit faster.
+//
+//	R_NO_GLCHECK -- Disable gl checking.
 
 #pragma once
 
